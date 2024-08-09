@@ -110,6 +110,14 @@ class _HomeScreenState extends State<HomeScreen> {
   UserModel userModel = UserModel();
 
   @override
+  void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((v) async {
+      userModel = await signUpController.getUserFromPreferences()??UserModel();
+    });
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     print(userModel.email.toString());
     return Scaffold(

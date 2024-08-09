@@ -110,6 +110,14 @@ class _HomeScreenState extends State<HomeScreen> {
   UserModel userModel = UserModel();
 
   @override
+  void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((v) async {
+      userModel = await signUpController.getUserFromPreferences()??UserModel();
+    });
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     print(userModel.email.toString());
     return Scaffold(
@@ -135,20 +143,20 @@ class _HomeScreenState extends State<HomeScreen> {
                       Builder(builder: (context) {
                         return GestureDetector(
                           onTap: () => Scaffold.of(context).openDrawer(),
-                          child: Icon(
+                          child: const Icon(
                             CupertinoIcons.decrease_indent,
                             color: Colors.white,
                           ),
                         );
                       }),
-                      Icon(
+                      const Icon(
                         CupertinoIcons.person_alt,
                         color: Colors.white,
                       )
                     ],
                   ),
                   SizedBox(height: 20.h),
-                  Text(
+                  const Text(
                     "Welcome Back",
                     style: TextStyle(
                       fontSize: 25,
@@ -177,14 +185,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   SizedBox(height: 10.h),
                   Container(
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.all(
                         Radius.circular(15),
                       ),
                     ),
                     child: CustomTextField(
-                      prefixIcon: Icon(CupertinoIcons.search),
+                      prefixIcon: const Icon(CupertinoIcons.search),
                       controller: controller,
                       hintText: "Search health issue...",
                     ),
@@ -197,7 +205,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(
+                const SizedBox(
                   height: 25,
                 ),
                 Text(
@@ -208,7 +216,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     fontWeight: FontWeight.w400,
                   ),
                 ),
-                SizedBox(
+                const SizedBox(
                   height: 25,
                 ),
                 CustomRowContent(
@@ -218,14 +226,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     Assets.con2.toString(),
                     Assets.con4.toString(),
                   ],
-                  texts: [
+                  texts: const [
                     "All",
                     "Cardiology",
                     "Medicine",
                     "General",
                   ],
                 ),
-                SizedBox(
+                const SizedBox(
                   height: 15,
                 ),
               ],
@@ -249,16 +257,16 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: EdgeInsets.zero,
           children: <Widget>[
             DrawerHeader(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: Colors.blue,
               ),
               child: FutureBuilder<User?>(
                 future: _getCurrentUser(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator());
+                    return const Center(child: CircularProgressIndicator());
                   } else if (snapshot.hasError) {
-                    return Center(child: Text('Error fetching user'));
+                    return const Center(child: Text('Error fetching user'));
                   } else if (snapshot.hasData && snapshot.data != null) {
                     User user = snapshot.data!;
                     return Column(
@@ -271,10 +279,10 @@ class _HomeScreenState extends State<HomeScreen> {
                               : null,
                           radius: 30.0,
                         ),
-                        SizedBox(height: 10),
+                        const SizedBox(height: 10),
                         Text(
                           user.displayName ?? 'No Name',
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
@@ -282,7 +290,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         Text(
                           user.email ?? 'No Email',
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
                           ),
@@ -290,13 +298,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     );
                   } else {
-                    return Center(child: Text('No user logged in'));
+                    return const Center(child: Text('No user logged in'));
                   }
                 },
               ),
             ),
             ListTile(
-              title: Text('Logout'),
+              title: const Text('Logout'),
               onTap: () async {
                 await FirebaseAuth.instance.signOut();
                 Get.offAll(LoginScreen());

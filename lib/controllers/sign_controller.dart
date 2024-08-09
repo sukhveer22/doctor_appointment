@@ -57,16 +57,7 @@ class SignUpController extends GetxController {
     }
   }
 
-  Future<void> saveUserToPreferences(UserModel user) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('userId', user.id.toString());
-      await prefs.setString('userName', user.name.toString());
-      await prefs.setString('userEmail', user.email.toString());
-    } catch (e) {
-      print('Error saving user to SharedPreferences: $e');
-    }
-  }
+
 
   Future<UserModel?> getUserFromPreferences() async {
     try {
@@ -101,5 +92,15 @@ class SignUpController extends GetxController {
       }
     }
     return 'An error occurred. Please try again.';
+  }
+}
+Future<void> saveUserToPreferences(UserModel user) async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('userId', user.id.toString());
+    await prefs.setString('userName', user.name.toString());
+    await prefs.setString('userEmail', user.email.toString());
+  } catch (e) {
+    print('Error saving user to SharedPreferences: $e');
   }
 }

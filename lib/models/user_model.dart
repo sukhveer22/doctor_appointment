@@ -19,5 +19,5 @@ class UserModel {
       : id = json["id"],
         name = json["name"],
         email = json["email"],
-        profilePicture = json['profilePicture'];
+        profilePicture = json['profilePictured'];
 }

@@ -35,10 +35,16 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
   final ChatController _chatController = Get.put(ChatController());
   SignUpController signUpController = Get.put(SignUpController());
   UserModel userModel = UserModel();
-
+  @override
+  void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((v) async {
+      userModel = await signUpController.getUserFromPreferences()??UserModel();
+    });
+    super.initState();
+  }
   @override
   Widget build(BuildContext context) {
-    // print(signUpController.userModel.value?.email.toString());
+print(userModel.id.toString());
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(

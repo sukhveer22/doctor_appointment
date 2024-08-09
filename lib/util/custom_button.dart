@@ -1,3 +1,4 @@
+import 'package:doctor_appointment/util/app_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -15,9 +16,9 @@ class CustomButton extends StatelessWidget {
   CustomButton({
     required this.text,
     required this.onPressed,
-    this.color = Colors.blue,
+    this.color = AppColors.primaryColor,
     this.textColor = Colors.white,
-    this.borderRadius = 8.0,
+    this.borderRadius = 18.0,
     this.padding = const EdgeInsets.symmetric(vertical: 16.0),
     this.elevation = 2.0,
     this.fontSize = 16.0,
@@ -27,6 +28,15 @@ class CustomButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          color: AppColors.primaryColor,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black45,
+              blurRadius: 10.0,
+            ),
+          ]),
       height: 60,
       width: MediaQuery.of(context).size.width * 0.5,
       child: ElevatedButton(
@@ -41,14 +51,16 @@ class CustomButton extends StatelessWidget {
           padding: padding,
         ),
         child: isLoading
-            ? Center(child: CircularProgressIndicator(color: textColor)) // Show loading indicator
+            ? Center(
+                child: CircularProgressIndicator(
+                    color: AppColors.primaryColor)) // Show loading indicator
             : Text(
-          text,
-          style: TextStyle(
-            fontSize: fontSize.sp,
-            color: textColor,
-          ),
-        ),
+                text,
+                style: TextStyle(
+                  fontSize: fontSize.sp,
+                  color: textColor,
+                ),
+              ),
       ),
     );
   }

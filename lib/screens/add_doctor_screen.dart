@@ -75,7 +75,8 @@ class _AddDoctorScreenState extends State<AddDoctorScreen> {
                         backgroundImage: imageFile != null
                             ? FileImage(File(imageFile.path))
                             : AssetImage(
-                                "assets/home_screen_image/doctor-images/doctor5.png"),
+                                "assets/home_screen_image/doctor-images/doctor5.png",
+                              ),
                       ),
                     ).paddingAll(2),
                   );

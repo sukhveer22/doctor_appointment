@@ -41,6 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ).height(60.h),
             Obx(
               () => CustomTextField(
+                maxLine: 1,
                 controller: controller.passwordController,
                 hintText: 'Password',
                 isPassword: true,
@@ -70,7 +71,6 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               TextButton(
                 onPressed: () {
-                  // Navigate to the sign-up screen
                   Get.to(() => SignUpScreen());
                 },
                 child: Text(

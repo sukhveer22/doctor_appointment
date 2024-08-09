@@ -48,7 +48,7 @@ class _AddDoctorScreenState extends State<AddDoctorScreen> {
         body: Container(
           width: double.infinity,
           height: double.infinity,
-          decoration: BoxDecoration(),
+          decoration: const BoxDecoration(),
           child: SingleChildScrollView(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -74,7 +74,7 @@ class _AddDoctorScreenState extends State<AddDoctorScreen> {
                         radius: 65.r,
                         backgroundImage: imageFile != null
                             ? FileImage(File(imageFile.path))
-                            : AssetImage(
+                            : const AssetImage(
                                 "assets/home_screen_image/doctor-images/doctor5.png",
                               ),
                       ),
@@ -86,21 +86,21 @@ class _AddDoctorScreenState extends State<AddDoctorScreen> {
                   hintText: "Title",
                   controller: _titleController,
                 ),
-                SizedBox(height: 30),
+                const SizedBox(height: 30),
                 CustomTextField(
                   hintText: "Rating..",
                   controller: _ratingController,
-                  keyboardType: TextInputType.numberWithOptions(
+                  keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
                 ),
-                SizedBox(height: 30),
+                const SizedBox(height: 30),
                 CustomTextField(
                   maxLine: 8,
                   hintText: "Description...",
                   controller: _descriptionController,
                 ),
-                SizedBox(height: 60),
+                const SizedBox(height: 60),
                 CustomButton(
                   onPressed: () async {
                     final title = _titleController.text;

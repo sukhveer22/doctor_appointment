@@ -101,7 +101,7 @@ class CustomCard extends StatelessWidget {
                       MaterialPageRoute(
                         builder: (context) => AppointmentScreen(
                           name: doctor.title,
-                          destion: doctor.description,
+                          destination: doctor.description,
                           imagePath: doctor.imagePath,
                           appointmentId: '',
                         ),

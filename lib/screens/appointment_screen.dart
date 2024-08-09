@@ -1,29 +1,33 @@
 import 'package:doctor_appointment/controllers/appointment_controller.dart';
-import 'package:doctor_appointment/controllers/chat-controller.dart';
+import 'package:doctor_appointment/controllers/search_controller.dart';
 import 'package:doctor_appointment/controllers/sign_controller.dart';
 import 'package:doctor_appointment/models/appointent_model.dart';
 import 'package:doctor_appointment/models/user_model.dart';
 import 'package:doctor_appointment/screens/chat_screen.dart';
+import 'package:doctor_appointment/screens/doctor_chat.dart';
 import 'package:doctor_appointment/util/app_color.dart';
 import 'package:doctor_appointment/util/app_config.dart';
 import 'package:doctor_appointment/util/path.dart';
 import 'package:easy_date_timeline/easy_date_timeline.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 class AppointmentScreen extends StatefulWidget {
   final String? name;
-  final String? destion;
+  final String? destination;
   final String? imagePath;
   final String appointmentId;
+  final String doctorId;
 
   const AppointmentScreen({
     super.key,
     this.name,
-    this.destion,
+    this.destination,
     this.imagePath,
     required this.appointmentId,
+    this.doctorId = "dAe5HGEmiGeUPB3Xjq1rSH85Rs73",
   });
 
   @override
@@ -32,25 +36,29 @@ class AppointmentScreen extends StatefulWidget {
 
 class _AppointmentScreenState extends State<AppointmentScreen> {
   final AppointmentController _controller = Get.put(AppointmentController());
-  final ChatController _chatController = Get.put(ChatController());
-  SignUpController signUpController = Get.put(SignUpController());
-  UserModel userModel = UserModel();
+  final SearchsController searchController = Get.put(SearchsController());
+  final SignUpController signUpController = Get.put(SignUpController());
+  UserModel? userModel;
+  final User? firebaseUser = FirebaseAuth.instance.currentUser;
+
   @override
   void initState() {
-    WidgetsBinding.instance.addPostFrameCallback((v) async {
-      userModel = await signUpController.getUserFromPreferences()??UserModel();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      userModel =
+          await signUpController.getUserFromPreferences() ?? UserModel();
+      setState(() {});
     });
     super.initState();
   }
+
   @override
   Widget build(BuildContext context) {
-print(userModel.id.toString());
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        shadowColor: Colors.white,
-        surfaceTintColor: Colors.white,
+        shadowColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
         centerTitle: true,
         title: const Text(
           "Appointment",
@@ -62,8 +70,19 @@ print(userModel.id.toString());
         actions: [
           IconButton(
             icon: const Icon(Icons.chat),
-            onPressed: () {
-              Get.to(() => const ChatScreen(appointmentId: "5647469876743546"));
+            onPressed: () async {
+              if (widget.doctorId == firebaseUser?.uid.toString()) {
+                Get.to(ActiveUsersScreen());
+              } else {
+                var chatroomModel = await searchController.getChatroomModel();
+                if (chatroomModel != null) {
+                  Get.to(() => ChatScreen(
+                        chatroom: chatroomModel,
+                      ));
+                } else {
+                  Get.snackbar("Error", "Chatroom could not be created.");
+                }
+              }
             },
           ),
         ],
@@ -76,14 +95,12 @@ print(userModel.id.toString());
             children: [
               SizedBox(height: 20.h),
               Center(
-                child: Container(
+                child: SizedBox(
                   height: 100.h,
                   width: 100.w,
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(20.r),
-                    child: Image(
-                      image: AssetImage(widget.imagePath ?? ""),
-                    ),
+                    child: Image.asset(widget.imagePath ?? ""),
                   ),
                 ),
               ),
@@ -102,8 +119,8 @@ print(userModel.id.toString());
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(
-                      height: 10,
+                    SizedBox(
+                      height: 10.h,
                       child: const Image(image: AssetImage(Assets.con1)),
                     ),
                     SizedBox(width: 5.w),
@@ -141,7 +158,7 @@ print(userModel.id.toString());
               ),
               SizedBox(height: 5.h),
               Text(
-                widget.destion ?? "",
+                widget.destination ?? "",
                 style: TextStyle(fontWeight: FontWeight.w400, fontSize: 15.sp),
               ),
               SizedBox(height: 20.h),
@@ -182,25 +199,30 @@ print(userModel.id.toString());
               ),
               Padding(
                 padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 20.w),
-                child: Container(
+                child: SizedBox(
                   width: AppConfig.screenWidth,
                   child: ElevatedButton(
                     onPressed: () async {
-                      AppointmentModel appointment = AppointmentModel(
-                        id: userModel.id.toString(),
-                        doctorName: widget.name ?? "Unknown Doctor",
-                        doctorImage: widget.imagePath ?? "",
-                        patientId: "",
-                        appointmentDate: _controller.selectedDate.value,
-                      );
+                      if (userModel != null) {
+                        AppointmentModel appointment = AppointmentModel(
+                          id: userModel!.id.toString(),
+                          doctorName: widget.name ?? "Unknown Doctor",
+                          doctorImage: widget.imagePath ?? "",
+                          patientId: "",
+                          appointmentDate: _controller.selectedDate.value,
+                        );
 
-                      await _controller.saveAppointmentToFirestore(appointment);
+                        await _controller
+                            .saveAppointmentToFirestore(appointment);
 
-                      Get.snackbar(
-                        "Booking",
-                        "Appointment booked successfully!",
-                        snackPosition: SnackPosition.BOTTOM,
-                      );
+                        Get.snackbar(
+                          "Booking",
+                          "Appointment booked successfully!",
+                          snackPosition: SnackPosition.BOTTOM,
+                        );
+                      } else {
+                        Get.snackbar("Error", "User data is not available");
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryColor,

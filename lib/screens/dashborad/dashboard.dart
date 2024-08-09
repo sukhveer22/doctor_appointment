@@ -1,12 +1,13 @@
-import 'package:doctor_appointment/models/user_model.dart';
 import 'package:doctor_appointment/screens/add_doctor_screen.dart';
+import 'package:doctor_appointment/screens/doctor_chat.dart';
 import 'package:doctor_appointment/util/app_color.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:sliding_clipped_nav_bar/sliding_clipped_nav_bar.dart';
 
+import '../../models/chat_model.dart';
 import '../home_screen.dart';
 
 enum _SelectedTab { Home, Chat, Doctor }
@@ -26,6 +27,13 @@ class NavigationController extends GetxController {
 }
 
 class DashboardScreen extends StatelessWidget {
+  DashboardScreen({
+    super.key,
+  });
+
+  final ChatRoomModel chatroom = ChatRoomModel();
+  final User? firebaseUser = FirebaseAuth.instance.currentUser;
+
   @override
   Widget build(BuildContext context) {
     final NavigationController controller = Get.put(NavigationController());
@@ -33,11 +41,16 @@ class DashboardScreen extends StatelessWidget {
     return Scaffold(
       body: PageView(
         controller: controller.pageController,
-        physics: NeverScrollableScrollPhysics(),
+        physics: const NeverScrollableScrollPhysics(),
         onPageChanged: (index) {
           controller.selectedIndex.value = _SelectedTab.values[index];
         },
-        children: [HomeScreen(), ScreenTwo(), AddDoctorScreen()],
+        children: [
+          HomeScreen(),
+          if (firebaseUser?.uid.toString() == "dAe5HGEmiGeUPB3Xjq1rSH85Rs73")
+            ActiveUsersScreen(),
+          AddDoctorScreen(),
+        ],
       ),
       bottomNavigationBar: Obx(
         () => SlidingClippedNavBar(
@@ -56,28 +69,18 @@ class DashboardScreen extends StatelessWidget {
               icon: CupertinoIcons.house_alt_fill,
               title: 'Home',
             ),
-
-            BarItem(
-              icon: Icons.messenger,
-              title: 'Chat',
-            ),
+            if (firebaseUser?.uid.toString() == "dAe5HGEmiGeUPB3Xjq1rSH85Rs73")
+              BarItem(
+                icon: Icons.messenger,
+                title: 'Chat',
+              ),
             BarItem(
               icon: CupertinoIcons.add_circled_solid,
               title: 'Doctor',
             ),
-            // Add more BarItem if you want
           ],
         ),
       ),
-    );
-  }
-}
-
-class ScreenTwo extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text('Search Screen'),
     );
   }
 }

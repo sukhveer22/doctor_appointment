@@ -1,4 +1,5 @@
 import 'package:doctor_appointment/screens/dashborad/dashboard.dart';
+import 'package:doctor_appointment/util/user-data-get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -37,6 +38,8 @@ class SignUpController extends GetxController {
 
       await saveUserToFirestore(user);
       await saveUserToPreferences(user);
+      await FirebaseHelper.getUserModelById(
+          userCredential.user!.uid.toString());
 
       Get.off(DashboardScreen());
       Get.snackbar('Success', 'Signed up successfully');
@@ -50,7 +53,7 @@ class SignUpController extends GetxController {
   Future<void> saveUserToFirestore(UserModel user) async {
     try {
       final userRef =
-          FirebaseFirestore.instance.collection('users').doc(user.id);
+          FirebaseFirestore.instance.collection('Users').doc(user.id);
       await userRef.set(user.toMap());
     } catch (e) {
       print('Error saving user to Firestore: $e');

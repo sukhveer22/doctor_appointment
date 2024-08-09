@@ -29,7 +29,9 @@ class CustomTextField extends StatelessWidget {
     this.borderColor = Colors.grey,
     this.focusedBorderColor = Colors.blue,
     this.errorBorderColor = Colors.red,
-    this.prefixIcon, this.keyboardType, this.maxLine,
+    this.prefixIcon,
+    this.keyboardType,
+    this.maxLine = 1,
   });
 
   @override
@@ -45,11 +47,11 @@ class CustomTextField extends StatelessWidget {
         prefixIcon: prefixIcon,
         suffixIcon: isPassword
             ? IconButton(
-          icon: Icon(
-            isPasswordHidden ? Icons.visibility : Icons.visibility_off,
-          ),
-          onPressed: togglePasswordVisibility,
-        )
+                icon: Icon(
+                  isPasswordHidden ? Icons.visibility : Icons.visibility_off,
+                ),
+                onPressed: togglePasswordVisibility,
+              )
             : null,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),

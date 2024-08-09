@@ -108,18 +108,20 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
   SignUpController signUpController = Get.put(SignUpController());
   UserModel userModel = UserModel();
-
+  User? user = FirebaseAuth.instance.currentUser;
   @override
   void initState() {
-    WidgetsBinding.instance.addPostFrameCallback((v) async {
-      userModel = await signUpController.getUserFromPreferences()??UserModel();
-    });
+    User? user = FirebaseAuth.instance.currentUser;
+    // WidgetsBinding.instance.addPostFrameCallback((v) async {
+    //   userModel = await signUpController.getUserFromPreferences()??UserModel();
+    // });
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    print(userModel.email.toString());
+    print(user?.uid.toString());
+    print(userModel.id.toString());
     return Scaffold(
       drawerScrimColor: Colors.white,
       backgroundColor: Colors.white,

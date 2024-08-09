@@ -19,7 +19,7 @@ class SignUpScreen extends StatelessWidget {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Sign Up'),
+          title: const Text('Sign Up'),
           centerTitle: true,
         ),
         body: SingleChildScrollView(
@@ -27,7 +27,7 @@ class SignUpScreen extends StatelessWidget {
 
             child: Obx(() {
               if (controller.isLoading.value) {
-                return Center(child: CircularProgressIndicator());
+                return const Center(child: CircularProgressIndicator());
               } else {
                 return Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20.w),
@@ -90,7 +90,7 @@ class SignUpScreen extends StatelessWidget {
           ),
         ),
         bottomNavigationBar: Padding(
-          padding: EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

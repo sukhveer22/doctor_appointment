@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-
+import 'package:doctor_appointment/models/doctor_model.dart';
 import '../models/user_model.dart';
 
 class FirebaseHelper {
@@ -14,5 +14,16 @@ class FirebaseHelper {
     }
 
     return userModel;
+  } static Future<Doctors?> getDoctorModelById(String uid) async {
+    Doctors? doctorsmodel;
+
+    DocumentSnapshot docSnap =
+        await FirebaseFirestore.instance.collection("Users").doc(uid).get();
+
+    if (docSnap.data() != null) {
+      doctorsmodel = Doctors.fromMap(docSnap.data() as Map<String, dynamic>);
+    }
+
+    return doctorsmodel;
   }
 }

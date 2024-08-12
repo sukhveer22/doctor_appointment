@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:doctor_appointment/controllers/chat-room_controller.dart';
 import 'package:doctor_appointment/models/chat_model.dart';
-import 'package:doctor_appointment/screens/chat_screen.dart';
+import 'package:doctor_appointment/patient/screens/chat_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -15,6 +14,13 @@ class ActiveUsersScreen extends StatefulWidget {
 class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final User? firebaseUser = FirebaseAuth.instance.currentUser;
+
+  // Define the text style here
+  final TextStyle titleStyle = TextStyle(
+    fontSize: 18,
+    fontWeight: FontWeight.bold,
+    color: Colors.black,
+  );
 
   Future<ChatRoomModel?> getChatRoomModel(String doctorId) async {
     final currentUserId = firebaseUser?.uid;
@@ -58,7 +64,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Active Users'),
+        title: Text('Active Users', style: titleStyle), // Apply text style here
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: _firestore
@@ -71,7 +77,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
           }
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return Center(child: Text('No active users found.'));
+            return Center(child: Text('No active users found.', style: titleStyle));
           }
 
           return ListView.builder(
@@ -85,25 +91,23 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                 leading: CircleAvatar(
                   backgroundColor: Colors.grey[300],
                   backgroundImage: NetworkImage(
-                    userData['profilePicture'] ??
-                        'https://via.placeholder.com/150',
+                    userData['profilePicture'] ?? 'https://via.placeholder.com/150',
                   ),
                 ),
                 title: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(userData['name'] ?? 'No Name'),
+                    Text(userData['name'] ?? 'No Name', style: titleStyle), // Apply text style here
                     userData['seen'] == true
                         ? Container(
-                            width: 15,
-                            height: 15,
-                            decoration: BoxDecoration(
-                                shape: BoxShape.circle, color: Colors.green),
-                          )
+                      width: 15,
+                      height: 15,
+                      decoration: BoxDecoration(
+                          shape: BoxShape.circle, color: Colors.green,),
+                    )
                         : Container(
-                            width: 10,
-                            height: 10,
-                          ),
+
+                    ),
                   ],
                 ),
                 onTap: () async {
@@ -114,10 +118,9 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
 
                     if (chatroomModel != null) {
                       Get.to(() => ChatScreen(
-                            chatroom: chatroomModel,
-                          ));
-                      if ("dAe5HGEmiGeUPB3Xjq1rSH85Rs73" ==
-                          firebaseUser?.uid.toString()) {
+                        chatroom: chatroomModel,
+                      ));
+                      if ("hKRefmYs2wNYzhlpUo9miuDUFMZ2" == firebaseUser?.uid.toString()) {
                         await FirebaseFirestore.instance
                             .collection('Users')
                             .doc(userData["id"])

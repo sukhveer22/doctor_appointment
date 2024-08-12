@@ -1,5 +1,4 @@
-import 'dart:ffi';
-
+import 'package:doctor_appointment/util/app_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -13,10 +12,14 @@ class CustomTextField extends StatelessWidget {
   final VoidCallback? togglePasswordVisibility;
   final void Function(String)? onChanged;
   final String? Function(String?)? validator;
-  final Color borderColor;
-  final Color focusedBorderColor;
-  final Color errorBorderColor;
+  final Color? borderColor;
+  final Color? focusedBorderColor;
+  final Color? errorBorderColor;
   final Widget? prefixIcon;
+  final TextStyle? helperStyle;
+  final TextStyle? floatingLabelStyle;
+  final TextStyle? hintStyle;
+  final TextStyle? counterStyle;
 
   CustomTextField({
     required this.controller,
@@ -26,12 +29,16 @@ class CustomTextField extends StatelessWidget {
     this.togglePasswordVisibility,
     this.onChanged,
     this.validator,
-    this.borderColor = Colors.grey,
-    this.focusedBorderColor = Colors.blue,
-    this.errorBorderColor = Colors.red,
+    this.borderColor,
+    this.focusedBorderColor,
+    this.errorBorderColor,
     this.prefixIcon,
     this.keyboardType,
     this.maxLine = 1,
+    this.helperStyle,
+    this.floatingLabelStyle,
+    this.hintStyle,
+    this.counterStyle,
   });
 
   @override
@@ -44,43 +51,69 @@ class CustomTextField extends StatelessWidget {
       obscureText: isPassword ? isPasswordHidden : false,
       decoration: InputDecoration(
         hintText: hintText,
+        helperStyle: helperStyle ?? TextStyle(
+            fontSize: 16.sp,
+            color: Colors.black,
+            fontWeight: FontWeight.w700
+        ),
+        floatingLabelStyle: floatingLabelStyle ?? TextStyle(
+            fontSize: 16.sp,
+            color: Colors.black,
+            fontWeight: FontWeight.w700
+        ),
+        hintStyle: hintStyle ?? TextStyle(
+            fontSize: 16.sp,
+            color: Colors.black,
+            fontWeight: FontWeight.w700
+        ),
         prefixIcon: prefixIcon,
+        counterStyle: counterStyle ?? TextStyle(
+            fontSize: 16.sp,
+            color: Colors.black,
+            fontWeight: FontWeight.w700
+        ),
         suffixIcon: isPassword
             ? IconButton(
-                icon: Icon(
-                  isPasswordHidden ? Icons.visibility : Icons.visibility_off,
-                ),
-                onPressed: togglePasswordVisibility,
-              )
+          icon: Icon(
+            color: Colors.black,
+            isPasswordHidden ? Icons.visibility : Icons.visibility_off,
+          ),
+          onPressed: togglePasswordVisibility,
+        )
             : null,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
           borderSide: BorderSide(
-            color: borderColor,
+            width: 2.w,
+            color: borderColor ?? Colors.black87,
           ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
           borderSide: BorderSide(
-            color: borderColor,
+            width: 2.w,
+            color: borderColor ?? Colors.black87,
           ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
           borderSide: BorderSide(
-            color: focusedBorderColor,
+            width: 2.w,
+            color: focusedBorderColor ?? AppColors.primaryColor,
           ),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
           borderSide: BorderSide(
-            color: errorBorderColor,
+            width: 2.w,
+            color: errorBorderColor ?? Colors.red,
           ),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
           borderSide: BorderSide(
-            color: errorBorderColor,
+            width: 2.w,
+            color: errorBorderColor ?? Colors.red,
           ),
         ),
       ),

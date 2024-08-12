@@ -1,10 +1,11 @@
-import 'package:doctor_appointment/controllers/appointment_controller.dart';
-import 'package:doctor_appointment/controllers/search_controller.dart';
-import 'package:doctor_appointment/controllers/sign_controller.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:doctor_appointment/doctor/controllers/search_controller.dart';
 import 'package:doctor_appointment/models/appointent_model.dart';
 import 'package:doctor_appointment/models/user_model.dart';
-import 'package:doctor_appointment/screens/chat_screen.dart';
-import 'package:doctor_appointment/screens/doctor_chat.dart';
+import 'package:doctor_appointment/patient/controllers/appointment_controller.dart';
+import 'package:doctor_appointment/patient/controllers/sign_controller.dart';
+import 'package:doctor_appointment/patient/screens/chat_screen.dart';
+import 'package:doctor_appointment/doctor/screens/doctor_chat.dart';
 import 'package:doctor_appointment/util/app_color.dart';
 import 'package:doctor_appointment/util/app_config.dart';
 import 'package:doctor_appointment/util/path.dart';
@@ -19,7 +20,6 @@ class AppointmentScreen extends StatefulWidget {
   final String? destination;
   final String? imagePath;
   final String appointmentId;
-  final String doctorId;
 
   const AppointmentScreen({
     super.key,
@@ -27,7 +27,6 @@ class AppointmentScreen extends StatefulWidget {
     this.destination,
     this.imagePath,
     required this.appointmentId,
-    this.doctorId = "dAe5HGEmiGeUPB3Xjq1rSH85Rs73",
   });
 
   @override
@@ -51,6 +50,48 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
     super.initState();
   }
 
+  Future<bool> isDateAvailable(DateTime selectedDate) async {
+    try {
+      final appointments =
+          await FirebaseFirestore.instance.collection('appointments').get();
+
+      for (var doc in appointments.docs) {
+        final appointmentData = doc.data() as Map<String, dynamic>;
+        dynamic appointmentDateValue = appointmentData['appointmentDate'];
+        DateTime appointmentDate;
+
+        if (appointmentDateValue is Timestamp) {
+          appointmentDate = appointmentDateValue.toDate();
+        } else if (appointmentDateValue is String) {
+          try {
+            appointmentDate = DateTime.parse(appointmentDateValue);
+          } catch (e) {
+            print('Error parsing date: $e');
+            continue;
+          }
+        } else {
+          print('Unexpected date type: ${appointmentDateValue.runtimeType}');
+          continue;
+        }
+
+        if (DateTime(
+          appointmentDate.year,
+          appointmentDate.month,
+          appointmentDate.day,
+        ).isAtSameMomentAs(DateTime(
+          selectedDate.year,
+          selectedDate.month,
+          selectedDate.day,
+        ))) {
+          return false;
+        }
+      }
+    } catch (e) {
+      print('Error checking date availability: $e');
+    }
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -71,7 +112,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
           IconButton(
             icon: const Icon(Icons.chat),
             onPressed: () async {
-              if (widget.doctorId == firebaseUser?.uid.toString()) {
+              if ("DoctorData.doctorId" == firebaseUser?.uid.toString()) {
                 Get.to(ActiveUsersScreen());
               } else {
                 var chatroomModel = await searchController.getChatroomModel();
@@ -203,25 +244,27 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                   width: AppConfig.screenWidth,
                   child: ElevatedButton(
                     onPressed: () async {
-                      if (userModel != null) {
-                        AppointmentModel appointment = AppointmentModel(
-                          id: userModel!.id.toString(),
-                          doctorName: widget.name ?? "Unknown Doctor",
-                          doctorImage: widget.imagePath ?? "",
-                          patientId: "",
-                          appointmentDate: _controller.selectedDate.value,
-                        );
-
-                        await _controller
-                            .saveAppointmentToFirestore(appointment);
-
-                        Get.snackbar(
-                          "Booking",
-                          "Appointment booked successfully!",
-                          snackPosition: SnackPosition.BOTTOM,
-                        );
-                      } else {
-                        Get.snackbar("Error", "User data is not available");
+                      if (firebaseUser != null && userModel != null) {
+                        bool dateAvailable = await isDateAvailable(
+                            _controller.selectedDate.value);
+                        if (dateAvailable) {
+                          AppointmentModel appointment = AppointmentModel(
+                            appointmentid: firebaseUser!.uid.toString(),
+                            userName: userModel!.name ?? "",
+                            doctorName: widget.name ?? "Unknown Doctor",
+                            userImage: firebaseUser!.photoURL.toString(),
+                            doctorImage: widget.imagePath ?? "",
+                            doctorId: widget.appointmentId,
+                            appointmentDate: _controller.selectedDate.value,
+                          );
+                          await _controller
+                              .saveAppointmentToFirestore(appointment);
+                        } else {
+                          Get.snackbar('Date Unavailable',
+                              'This date is already booked.',
+                              backgroundColor: Colors.red,
+                              colorText: Colors.white);
+                        }
                       }
                     },
                     style: ElevatedButton.styleFrom(
@@ -232,7 +275,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                       ),
                     ),
                     child: Text(
-                      "Booking Appointment",
+                      "Make an Appointment",
                       style: TextStyle(
                         fontSize: 18.sp,
                         fontWeight: FontWeight.w600,
@@ -249,28 +292,33 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
     );
   }
 
-  Widget _buildStatCard(String stat, String label, Color color) {
+  Widget _buildStatCard(String number, String title, Color color) {
     return Container(
-      height: 90.h,
+      height: 120.h,
       width: 100.w,
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15.r),
+        borderRadius: BorderRadius.circular(20.r),
+        color: color,
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            stat,
+            number,
             style: TextStyle(
-              color: color,
-              fontSize: 40.sp,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
+              fontSize: 20.sp,
+              color: Colors.white,
             ),
           ),
+          SizedBox(height: 5.h),
           Text(
-            label,
-            style: TextStyle(fontSize: 15.sp),
+            title,
+            style: TextStyle(
+              fontWeight: FontWeight.w400,
+              fontSize: 15.sp,
+              color: Colors.white,
+            ),
           ),
         ],
       ),

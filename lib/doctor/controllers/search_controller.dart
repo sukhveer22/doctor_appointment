@@ -1,16 +1,17 @@
-import 'package:doctor_appointment/models/chat_model.dart';
-import 'package:doctor_appointment/models/user_model.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:doctor_appointment/util/doctor_util.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:uuid/uuid.dart';
+import 'package:doctor_appointment/models/chat_model.dart';
+import 'package:doctor_appointment/models/user_model.dart';
 
 class SearchsController extends GetxController {
   var searchResults = <UserModel>[].obs;
   var isLoading = true.obs;
   var searchQuery = 'doctor'.obs;
   final User? firebaseUser = FirebaseAuth.instance.currentUser;
-
+  final FirebaseFirestore firestore = FirebaseFirestore.instance;
   @override
   void onInit() {
     super.onInit();
@@ -24,7 +25,7 @@ class SearchsController extends GetxController {
     try {
       var query = FirebaseFirestore.instance
           .collection("Users")
-          .where("name", isGreaterThanOrEqualTo: "doctor");
+          .where("name", isGreaterThanOrEqualTo: searchQuery.value);
 
       if (firebaseUser?.displayName != null) {
         query = query.where("name", isNotEqualTo: firebaseUser?.displayName);
@@ -46,10 +47,47 @@ class SearchsController extends GetxController {
       isLoading.value = false;
     }
   }
+  Future<ChatRoomModel?> getChatRoomModel(String doctorId) async {
+    final currentUserId = firebaseUser?.uid;
+
+    if (currentUserId == null) {
+      print("Current user ID is null");
+      return null;
+    }
+
+    final chatroomSnapshot = await firestore
+        .collection('chatRoom')
+        .where('participants.$currentUserId', isEqualTo: true)
+        .where('participants.$doctorId', isEqualTo: true)
+        .limit(1)
+        .get();
+
+    if (chatroomSnapshot.docs.isNotEmpty) {
+      return ChatRoomModel.fromMap(
+          chatroomSnapshot.docs.first.data() as Map<String, dynamic>);
+    }
+
+    // If no chatroom exists, create a new one
+    final newChatRoom = ChatRoomModel(
+      chatroomid: Uuid().v1(),
+      participants: {
+        currentUserId: true,
+        doctorId: true,
+      },
+      lastMessage: '',
+    );
+
+    await firestore
+        .collection('chatRoom')
+        .doc(newChatRoom.chatroomid)
+        .set(newChatRoom.toMap());
+
+    return newChatRoom;
+  }
 
   Future<ChatRoomModel?> getChatroomModel() async {
     ChatRoomModel? chatRoom;
-    String targetUser = "dAe5HGEmiGeUPB3Xjq1rSH85Rs73";
+    String targetUser =" DoctorData.doctorId";
     try {
       var snapshot = await FirebaseFirestore.instance
           .collection("chatRoom")

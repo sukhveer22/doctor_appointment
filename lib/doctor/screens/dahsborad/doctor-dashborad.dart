@@ -1,16 +1,22 @@
-import 'package:doctor_appointment/screens/add_doctor_screen.dart';
-import 'package:doctor_appointment/screens/doctor_chat.dart';
+import 'package:doctor_appointment/doctor/screens/doctor_home_screen.dart';
+import 'package:doctor_appointment/doctor/screens/doctor_schedule_screen.dart';
+import 'package:doctor_appointment/doctor/screens/profile_screens/dcotor-mian-profile.dart';
+import 'package:doctor_appointment/doctor/screens/profile_screens/doctorprofile_screen.dart';
+import 'package:doctor_appointment/patient/screens/add_doctor_screen.dart';
+import 'package:doctor_appointment/patient/screens/appointment-show.dart';
+import 'package:doctor_appointment/doctor/screens/doctor_chat.dart';
+import 'package:doctor_appointment/patient/screens/home_screen.dart';
 import 'package:doctor_appointment/util/app_color.dart';
+import 'package:doctor_appointment/util/doctor_util.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sliding_clipped_nav_bar/sliding_clipped_nav_bar.dart';
 
-import '../../models/chat_model.dart';
-import '../home_screen.dart';
+import '../../../models/chat_model.dart';
 
-enum _SelectedTab { Home, Chat, Doctor }
+enum _SelectedTab { Home, Chat, Appointment, Profile }
 
 class NavigationController extends GetxController {
   final PageController pageController = PageController();
@@ -26,8 +32,8 @@ class NavigationController extends GetxController {
   }
 }
 
-class DashboardScreen extends StatelessWidget {
-  DashboardScreen({
+class Doctordashborad extends StatelessWidget {
+  Doctordashborad({
     super.key,
   });
 
@@ -46,10 +52,11 @@ class DashboardScreen extends StatelessWidget {
           controller.selectedIndex.value = _SelectedTab.values[index];
         },
         children: [
-          HomeScreen(),
-          if (firebaseUser?.uid.toString() == "dAe5HGEmiGeUPB3Xjq1rSH85Rs73")
-            ActiveUsersScreen(),
-          AddDoctorScreen(),
+          // DoctorScheduleScreen(),
+          const DoctorHomeScreen(),
+          ActiveUsersScreen(),
+          AppointmentListScreen(),
+          AllProfile(),
         ],
       ),
       bottomNavigationBar: Obx(
@@ -69,14 +76,17 @@ class DashboardScreen extends StatelessWidget {
               icon: CupertinoIcons.house_alt_fill,
               title: 'Home',
             ),
-            if (firebaseUser?.uid.toString() == "dAe5HGEmiGeUPB3Xjq1rSH85Rs73")
-              BarItem(
-                icon: Icons.messenger,
-                title: 'Chat',
-              ),
             BarItem(
-              icon: CupertinoIcons.add_circled_solid,
-              title: 'Doctor',
+              icon: Icons.messenger,
+              title: 'Chat',
+            ),
+            BarItem(
+              icon: Icons.badge,
+              title: 'Appointment',
+            ),
+            BarItem(
+              icon: Icons.manage_accounts_sharp,
+              title: "Profile",
             ),
           ],
         ),

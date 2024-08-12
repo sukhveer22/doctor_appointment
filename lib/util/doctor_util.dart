@@ -1,16 +1,20 @@
-import 'package:doctor_appointment/screens/appointment_screen.dart';
-import 'package:doctor_appointment/screens/home_screen.dart';
+import 'package:doctor_appointment/models/doctor_model.dart';
+import 'package:doctor_appointment/patient/screens/appointment_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-
 import 'app_color.dart';
 
 class CustomCard extends StatelessWidget {
-  final Doctor doctor;
+  final Doctors doctor;
+  final User? firebaseuser = FirebaseAuth.instance.currentUser;
 
-  CustomCard({super.key, required this.doctor});
+  CustomCard({
+    super.key,
+    required this.doctor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +50,8 @@ class CustomCard extends StatelessWidget {
                     Radius.circular(12.r),
                   ),
                 ),
-                child: Image(image: AssetImage(doctor.imagePath)),
+                child: Image(
+                    image: NetworkImage(doctor.profilePictureUrl.toString())),
               ),
               Row(
                 children: [
@@ -56,7 +61,7 @@ class CustomCard extends StatelessWidget {
                     color: Colors.green,
                   ),
                   Text(
-                    doctor.rating.toString(),
+                    "55.0",
                     style: TextStyle(
                       fontSize: 18.sp,
                       color: AppColors.textColor,
@@ -74,7 +79,7 @@ class CustomCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               Text(
-                doctor.title,
+                doctor.phoneNumber.toString(),
                 style: TextStyle(
                   fontSize: 19.sp,
                   fontWeight: FontWeight.w700,
@@ -87,101 +92,38 @@ class CustomCard extends StatelessWidget {
                   maxWidth: MediaQuery.of(context).size.width * 0.5,
                 ),
                 child: Text(
-                  doctor.description,
+                  doctor.specialty,
                   style: TextStyle(
                     color: AppColors.textColor,
                   ),
                 ),
               ),
-              Align(
-                alignment: Alignment.bottomRight,
-                child: CupertinoButton(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => AppointmentScreen(
-                          name: doctor.title,
-                          destination: doctor.description,
-                          imagePath: doctor.imagePath,
-                          appointmentId: '',
+
+                Align(
+                  alignment: Alignment.bottomRight,
+                  child: CupertinoButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => AppointmentScreen(
+                            name: doctor.name,
+                            destination: doctor.specialty,
+                            imagePath: doctor.profilePictureUrl,
+                            appointmentId: '',
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                  child: Text(
-                    'Appointment',
-                    style: TextStyle(color: AppColors.textColor),
+                      );
+                    },
+                    child: Text(
+                      'Appointment',
+                      style: TextStyle(color: AppColors.textColor),
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
         ],
       ).paddingSymmetric(horizontal: 15),
-    );
-  }
-}
-
-class CustomRowContent extends StatelessWidget {
-  final List<String> imagePaths;
-  final List<String> texts;
-
-  CustomRowContent({required this.imagePaths, required this.texts});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: List.generate(texts.length, (index) {
-        return Expanded(
-          child: Container(
-            margin: EdgeInsets.symmetric(horizontal: 8.w),
-            child: Column(
-              children: [
-                Container(
-                  width: 60.w,
-                  height: 50.h,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    image: DecorationImage(
-                      image: AssetImage(imagePaths[index]),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.5),
-                        spreadRadius: 2,
-                        blurRadius: 5,
-                        offset: Offset(0, 3),
-                      ),
-                    ],
-                    borderRadius: BorderRadius.all(
-                      Radius.circular(12.r),
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: 4.w,
-                  height: 8,
-                ),
-                ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxHeight: 18,
-                    maxWidth: MediaQuery.of(context).size.width * 0.5,
-                  ),
-                  child: Text(
-                    texts[index],
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      color: AppColors.textColor,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }),
     );
   }
 }

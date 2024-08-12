@@ -1,11 +1,15 @@
-import 'package:doctor_appointment/screens/dashborad/dashboard.dart';
+import 'dart:io';
+import 'package:doctor_appointment/patient/dashborad/dashboard.dart';
 import 'package:doctor_appointment/util/user-data-get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:doctor_appointment/models/user_model.dart';
+import 'package:image_cropper/image_cropper.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class SignUpController extends GetxController {
   var nameController = TextEditingController();
@@ -13,6 +17,8 @@ class SignUpController extends GetxController {
   var passwordController = TextEditingController(text: "123456");
   var isPasswordHidden = true.obs;
   var isLoading = false.obs;
+  String? profilePictureUrl;
+  Rx<CroppedFile?> imageFile = Rx<CroppedFile?>(null);
 
   void togglePasswordVisibility() {
     isPasswordHidden.value = !isPasswordHidden.value;
@@ -28,18 +34,28 @@ class SignUpController extends GetxController {
         password: passwordController.text.trim(),
       );
 
-      await userCredential.user?.updateDisplayName(nameController.text.trim());
 
+      if (imageFile.value != null) {
+        final storageRef = FirebaseStorage.instance
+            .ref()
+            .child('profilePicture/${userCredential.user!.uid}');
+        final uploadTask = storageRef.putFile(File(imageFile.value!.path));
+        final snapshot = await uploadTask.whenComplete(() {});
+        profilePictureUrl = await snapshot.ref.getDownloadURL();
+
+      }
+      await userCredential.user?.updatePhotoURL(profilePictureUrl);
+      await userCredential.user?.updateDisplayName(nameController.text.trim());
       UserModel user = UserModel(
         id: userCredential.user!.uid,
         name: nameController.text.trim(),
         email: emailController.text.trim(),
+        profilePicture: profilePictureUrl.toString(),
       );
-
+      UserModel? users = await FirebaseHelper.getUserModelById(user.id.toString());
       await saveUserToFirestore(user);
       await saveUserToPreferences(user);
-      await FirebaseHelper.getUserModelById(
-          userCredential.user!.uid.toString());
+
 
       Get.off(DashboardScreen());
       Get.snackbar('Success', 'Signed up successfully');
@@ -104,5 +120,57 @@ class SignUpController extends GetxController {
       }
     }
     return 'An error occurred. Please try again.';
+  }
+
+  void selectImage(ImageSource source) async {
+    XFile? pickedFile = await ImagePicker().pickImage(source: source);
+
+    if (pickedFile != null) {
+      cropImage(pickedFile);
+    }
+  }
+
+  void cropImage(XFile file) async {
+    try {
+      CroppedFile? croppedImage = await ImageCropper().cropImage(
+        sourcePath: file.path,
+      );
+
+      if (croppedImage != null) {
+        imageFile.value = croppedImage;
+      }
+    } catch (e) {
+      Get.snackbar("Error", "Error cropping image: $e",
+          snackPosition: SnackPosition.BOTTOM);
+    }
+  }
+
+  void showPhotoOptions() {
+    Get.dialog(
+      AlertDialog(
+        title: Text("Upload Profile Picture"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              onTap: () {
+                Get.back();
+                selectImage(ImageSource.gallery);
+              },
+              leading: Icon(Icons.photo_album),
+              title: Text("Select from Gallery"),
+            ),
+            ListTile(
+              onTap: () {
+                Get.back();
+                selectImage(ImageSource.camera);
+              },
+              leading: Icon(Icons.camera_alt),
+              title: Text("Select from Camera"),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

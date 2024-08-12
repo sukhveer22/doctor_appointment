@@ -1,4 +1,6 @@
-import 'package:doctor_appointment/screens/dashborad/dashboard.dart';
+import 'package:doctor_appointment/models/user_model.dart';
+import 'package:doctor_appointment/patient/dashborad/dashboard.dart';
+import 'package:doctor_appointment/util/user-data-get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -21,11 +23,14 @@ class LoginController extends GetxController {
         Get.snackbar('Error', 'Password cannot be empty');
       } else {
         isLoading.value = true; // Start loading
-        await FirebaseAuth.instance.signInWithEmailAndPassword(
+        UserCredential? user =
+            await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: emailController.text.trim(),
           password: passwordController.text.trim(),
         );
         Get.to(DashboardScreen());
+        UserModel? users =
+            await FirebaseHelper.getUserModelById(user.user!.uid.toString());
         Get.snackbar('Success', 'Logged in successfully');
       }
     } catch (e) {

@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:doctor_appointment/controllers/add_doctor_controller.dart';
+import 'package:doctor_appointment/patient/controllers/add_doctor_controller.dart';
 import 'package:doctor_appointment/util/app_color.dart';
 import 'package:doctor_appointment/util/custom_button.dart';
 import 'package:doctor_appointment/util/custom_text_field.dart';
@@ -125,6 +125,7 @@ class _AddDoctorScreenState extends State<AddDoctorScreen> {
                     }
                   },
                   text: "Save",
+                  textStyle: TextStyle(),
                 ),
               ],
             ).paddingSymmetric(horizontal: 20, vertical: 20),

@@ -147,193 +147,190 @@ class DoctorHomeScreen extends StatelessWidget {
 
   Widget _buildBody(String? userId) {
     return Flexible(
-      child: Container(
-        height: AppConfig.screenHeight,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topRight: Radius.circular(65.r),
-          ),
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              SizedBox(height: 10.h),
-              Container(
-                margin: EdgeInsets.symmetric(horizontal: 30.w),
-                padding: EdgeInsets.all(15.w),
-                decoration: BoxDecoration(
-                  color: Color(0xffCAD6FF),
-                  borderRadius: BorderRadius.circular(15.r),
-                ),
-                child: StreamBuilder<DocumentSnapshot>(
-                  stream: userId != null
-                      ? FirebaseFirestore.instance
-                          .collection('appointments')
-                          .doc(userId)
-                          .snapshots()
-                      : Stream.empty(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Center(child: CircularProgressIndicator());
-                    }
-                    if (!snapshot.hasData || !snapshot.data!.exists) {
-                      return Center(
-                        child: Text('No schedule found.'),
-                      );
-                    }
-
-                    var data = snapshot.data!.data() as Map<String, dynamic>;
-                    Timestamp startDateTimestamp = data['startDate'];
-                    Timestamp endDateTimestamp = data['endDate'];
-                    String startTimeString = data['startTime'];
-                    String endTimeString = data['endTime'];
-
-                    DateTime startDate = startDateTimestamp.toDate();
-                    DateTime endDate = endDateTimestamp.toDate();
-
-                    String formattedStartDate =
-                        DateFormat('MMMM d, yyyy').format(startDate);
-                    String formattedEndDate =
-                        DateFormat('MMMM d, yyyy').format(endDate);
-
-                    String formattedStartTime = startTimeString;
-                    String formattedEndTime = endTimeString;
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              "Schedule",
-                              style: AppTextStyles.header,
-                            ),
-                            SizedBox(width: 10.w),
-                            Icon(
-                              Icons.check_circle,
-                              color: Colors.green,
-                              size: 20.h,
-                            ),
-                          ],
-                        ),
-                        Text(
-                          "Start",
-                          style: AppTextStyles.header,
-                        ),
-                        Row(
-                          children: [
-                            Icon(Icons.calendar_today,
-                                size: 16.h, color: Colors.blue),
-                            SizedBox(width: 5.w),
-                            Text('$formattedStartDate'),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            Icon(Icons.access_time,
-                                size: 16.h, color: Colors.blue),
-                            SizedBox(width: 5.w),
-                            Text('$formattedStartTime'),
-                          ],
-                        ),
-                        Text(
-                          "End",
-                          style: AppTextStyles.header,
-                        ),
-                        Row(
-                          children: [
-                            Icon(Icons.calendar_today,
-                                size: 16.h, color: Colors.red),
-                            SizedBox(width: 5.w),
-                            Text('$formattedEndDate'),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            Icon(Icons.access_time,
-                                size: 16.h, color: Colors.red),
-                            SizedBox(width: 5.w),
-                            Text('$formattedEndTime'),
-                          ],
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ),
-              SizedBox(height: 10.h),
-              Container(
-                margin: EdgeInsets.symmetric(horizontal: 30.w),
-                padding: EdgeInsets.all(15.w),
-                decoration: BoxDecoration(
-                  color: Color(0xffCAD6FF),
-                  borderRadius: BorderRadius.circular(15.r),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        Get.to(DoctorScheduleScreen());
-                      },
-                      child: Container(
-                        width: 100.w,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(15.r),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              "Schedule",
-                              style: AppTextStyles.header,
-                            ),
-                            Image.asset(
-                              "assets/ssff.png",
-                              height: 50.h,
-                              width: 50.w,
-                            ),
-                          ],
-                        ).paddingAll(10.w),
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        Get.to(() => DoctorNotesScreen());
-                      },
-                      child: Container(
-                        width: 100.w,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(15.r),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              "Notes",
-                              style: AppTextStyles.header,
-                            ),
-                            Image.asset(
-                              "assets/schedule.png",
-                              height: 50.h,
-                              width: 50.w,
-                            ),
-                          ],
-                        ).paddingAll(10.w),
-                      ),
-                    ),
-
-                  ],
-                ),
-              ),
-            ],
-          ).paddingSymmetric(horizontal: 20.w, vertical: 20.h),
+        child: Container(
+      height: AppConfig.screenHeight,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topRight: Radius.circular(65.r),
         ),
       ),
-    );
+      child: SingleChildScrollView(
+        child: Column(
+          children: [
+            SizedBox(height: 10.h),
+            Container(
+              margin: EdgeInsets.symmetric(horizontal: 30.w),
+              padding: EdgeInsets.all(15.w),
+              decoration: BoxDecoration(
+                color: Color(0xffCAD6FF),
+                borderRadius: BorderRadius.circular(15.r),
+              ),
+              child: StreamBuilder<DocumentSnapshot>(
+                stream: userId != null
+                    ? FirebaseFirestore.instance
+                        .collection('Users')
+                        .doc(userId)
+                        .snapshots()
+                    : Stream.empty(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  }
+                  if (!snapshot.hasData || !snapshot.data!.exists) {
+                    return Center(
+                      child: Text('No schedule found.'),
+                    );
+                  }
+
+                  var data = snapshot.data!.data() as Map<String, dynamic>;
+                  var startDateField = data['startDate'] ?? '';
+                  var endDateField = data['endDate'] ?? '';
+                  String startTimeString = data['startTime'] ?? '';
+                  String endTimeString = data['endTime'] ?? '';
+
+                  String formattedStartDate =
+                      startDateField.isNotEmpty ? startDateField : 'N/A';
+                  String formattedEndDate =
+                      endDateField.isNotEmpty ? endDateField : 'N/A';
+
+                  String formattedStartTime =
+                      startTimeString.isNotEmpty ? startTimeString : 'N/A';
+                  String formattedEndTime =
+                      endTimeString.isNotEmpty ? endTimeString : 'N/A';
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            "Schedule",
+                            style: AppTextStyles.header,
+                          ),
+                          SizedBox(width: 10.w),
+                          Icon(
+                            Icons.check_circle,
+                            color: Colors.green,
+                            size: 20.h,
+                          ),
+                        ],
+                      ),
+                      Text(
+                        "Start",
+                        style: AppTextStyles.header,
+                      ),
+                      Row(
+                        children: [
+                          Icon(Icons.calendar_today,
+                              size: 16.h, color: Colors.blue),
+                          SizedBox(width: 5.w),
+                          Text(formattedStartDate),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Icon(Icons.access_time,
+                              size: 16.h, color: Colors.blue),
+                          SizedBox(width: 5.w),
+                          Text(formattedStartTime),
+                        ],
+                      ),
+                      Text(
+                        "End",
+                        style: AppTextStyles.header,
+                      ),
+                      Row(
+                        children: [
+                          Icon(Icons.calendar_today,
+                              size: 16.h, color: Colors.red),
+                          SizedBox(width: 5.w),
+                          Text(formattedEndDate),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Icon(Icons.access_time,
+                              size: 16.h, color: Colors.red),
+                          SizedBox(width: 5.w),
+                          Text(formattedEndTime),
+                        ],
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+            SizedBox(height: 10.h),
+            Container(
+              margin: EdgeInsets.symmetric(horizontal: 30.w),
+              padding: EdgeInsets.all(15.w),
+              decoration: BoxDecoration(
+                color: Color(0xffCAD6FF),
+                borderRadius: BorderRadius.circular(15.r),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      Get.to(DoctorScheduleScreen());
+                    },
+                    child: Container(
+                      width: 100.w,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(15.r),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            "Schedule",
+                            style: AppTextStyles.header,
+                          ),
+                          Image.asset(
+                            "assets/ssff.png",
+                            height: 50.h,
+                            width: 50.w,
+                          ),
+                        ],
+                      ).paddingAll(10.w),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Get.to(() => DoctorNotesScreen());
+                    },
+                    child: Container(
+                      width: 100.w,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(15.r),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            "Notes",
+                            style: AppTextStyles.header,
+                          ),
+                          Image.asset(
+                            "assets/schedule.png",
+                            height: 50.h,
+                            width: 50.w,
+                          ),
+                        ],
+                      ).paddingAll(10.w),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ).paddingSymmetric(horizontal: 20.w, vertical: 20.h),
+      ),
+    ));
   }
 }

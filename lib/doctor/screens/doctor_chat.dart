@@ -118,7 +118,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
 
                     if (chatroomModel != null) {
                       Get.to(() => ChatScreen(
-                        chatroom: chatroomModel,
+                        chatroom: chatroomModel, doctorid: '',
                       ));
                       if ("hKRefmYs2wNYzhlpUo9miuDUFMZ2" == firebaseUser?.uid.toString()) {
                         await FirebaseFirestore.instance

@@ -7,7 +7,7 @@ import 'package:get/get.dart';
 
 class LoginController extends GetxController {
   var emailController = TextEditingController();
-  var passwordController = TextEditingController();
+  var passwordController = TextEditingController(text: "123456");
   var isPasswordHidden = true.obs;
   var isLoading = false.obs; // Track loading state
 

@@ -6,16 +6,16 @@ class ChatController extends GetxController {
   final FirebaseAuth auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Stream<QuerySnapshot> getMessages(String appointmentId) {
+  Stream<QuerySnapshot> getMessages(String doctorId) {
     return _firestore
         .collection('appointments')
-        .doc(appointmentId)
+        .doc(doctorId)
         .collection('messages')
         .orderBy('timestamp', descending: true)
         .snapshots();
   }
 
-  Future<void> sendMessage(String appointmentId, String message) async {
+  Future<void> sendMessage(String doctorId, String message) async {
     if (message.trim().isEmpty) return;
 
     final User? user = auth.currentUser;
@@ -23,7 +23,7 @@ class ChatController extends GetxController {
     if (user != null) {
       await _firestore
           .collection('appointments')
-          .doc(appointmentId)
+          .doc(doctorId)
           .collection('messages')
           .add(
         {

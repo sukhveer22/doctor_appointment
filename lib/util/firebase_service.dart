@@ -3,7 +3,7 @@
 //
 // class service {
 //   servicecloud.firestore {match /databases/{database}/
-//   documents {match /appointments/{appointmentId} {
+//   documents {match /appointments/{doctorId} {
 //   allow read, write: if true; // Adjust as necessary for your security requirements
 //
 //   match /messages/{messageId} {

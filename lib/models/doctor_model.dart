@@ -7,6 +7,7 @@ class Doctors {
   final String email;
   final String? phoneNumber;
   final String? profilePictureUrl;
+  final String? role;
 
   final String? categoryId;
 
@@ -18,6 +19,7 @@ class Doctors {
     this.phoneNumber,
     this.profilePictureUrl,
     this.categoryId,
+    this.role,
   });
 
   // Convert a Doctor object to a map for Firestore storage
@@ -25,6 +27,7 @@ class Doctors {
     return {
       'id': id,
       'name': name,
+      'role': role,
       'specialty': specialty,
       'email': email,
       'phoneNumber': phoneNumber,
@@ -43,6 +46,7 @@ class Doctors {
       specialty: data['specialty'] ?? '',
       email: data['email'] ?? '',
       phoneNumber: data['phoneNumber'],
+      role: data['role'],
       profilePictureUrl: data['profilePictureUrl'],
       categoryId: data['categoryId'],
     );
@@ -56,6 +60,7 @@ class Doctors {
       specialty: map['specialty'] ?? '',
       email: map['email'] ?? '',
       phoneNumber: map['phoneNumber'],
+      role: map['role'],
       profilePictureUrl: map['profilePictureUrl'],
       categoryId: map['categoryId'],
     );
@@ -65,6 +70,7 @@ class Doctors {
       id: doc['id'] ?? '',
       name: doc['name'] ?? '',
       email: doc['email'] ?? '',
+      role: doc['role'] ?? '',
       phoneNumber: doc['phoneNumber'] ?? '',
       profilePictureUrl: doc['profilePictureUrl'] ?? '',
       specialty: doc['specialty'] ?? '',

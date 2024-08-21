@@ -13,7 +13,7 @@ class DoctorScheduleScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final DoctorScheduleController appointmentController =
-    Get.put(DoctorScheduleController());
+        Get.put(DoctorScheduleController());
 
     return Scaffold(
       appBar: AppBar(
@@ -23,15 +23,17 @@ class DoctorScheduleScreen extends StatelessWidget {
         elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 20.h),
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 20.h),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildSectionHeader('Select Start Date and Time'),
-            _buildDateSelector(context, appointmentController, isStartTime: true),
+            _buildDateSelector(context, appointmentController,
+                isStartTime: true),
             SizedBox(height: 20.h),
             _buildSectionHeader('Select End Date and Time'),
-            _buildDateSelector(context, appointmentController, isStartTime: false),
+            _buildDateSelector(context, appointmentController,
+                isStartTime: false),
             SizedBox(height: 40.h),
             _buildSaveButton(appointmentController, context),
           ],
@@ -68,9 +70,15 @@ class DoctorScheduleScreen extends StatelessWidget {
         children: [
           Obx(() {
             return EasyDateTimeLine(
-              initialDate: controller.startDate.value,
+              initialDate: isStartTime
+                  ? controller.startDate.value
+                  : controller.endDate.value,
               onDateChange: (selectedDate) {
-                controller.setStartDate(selectedDate);
+                if (isStartTime) {
+                  controller.setStartDate(selectedDate);
+                } else {
+                  controller.setEndDate(selectedDate);
+                }
               },
               dayProps: EasyDayProps(
                 height: 56.h,
@@ -87,9 +95,8 @@ class DoctorScheduleScreen extends StatelessWidget {
                     width: 124.w,
                     padding: EdgeInsets.symmetric(horizontal: 8.w),
                     decoration: BoxDecoration(
-                      color: isSelected
-                          ? const Color(0xffFF6D60)
-                          : Colors.white,
+                      color:
+                          isSelected ? const Color(0xffFF6D60) : Colors.white,
                       borderRadius: BorderRadius.circular(16.r),
                     ),
                     child: Row(
@@ -149,11 +156,11 @@ class DoctorScheduleScreen extends StatelessWidget {
                   child: Text(
                     isStartTime
                         ? controller.selectedStartTime.value != null
-                        ? 'Selected Start Time: ${controller.selectedStartTime.value!.format(context)}'
-                        : 'Select Start Time'
+                            ? 'Selected Start Time: ${controller.selectedStartTime.value!.format(context)}'
+                            : 'Select Start Time'
                         : controller.selectedEndTime.value != null
-                        ? 'Selected End Time: ${controller.selectedEndTime.value!.format(context)}'
-                        : 'Select End Time',
+                            ? 'Selected End Time: ${controller.selectedEndTime.value!.format(context)}'
+                            : 'Select End Time',
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
                       color: Colors.black,
@@ -179,6 +186,7 @@ class DoctorScheduleScreen extends StatelessWidget {
           text: 'Save Appointment',
           textColor: Colors.black,
           color: AppColors.primaryColor,
+          isLoading: appointmentController.saveDataLoading,
         ),
       ),
     );

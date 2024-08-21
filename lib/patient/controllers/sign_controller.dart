@@ -51,6 +51,7 @@ class SignUpController extends GetxController {
         name: nameController.text.trim(),
         email: emailController.text.trim(),
         profilePicture: profilePictureUrl.toString(),
+        role: "patient", // Sav
       );
       UserModel? users = await FirebaseHelper.getUserModelById(user.id.toString());
       await saveUserToFirestore(user);

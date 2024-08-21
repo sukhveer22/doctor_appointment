@@ -3,10 +3,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class AppTextStyles {
   static final TextStyle largeTitle = TextStyle(
-    fontSize: 22.sp,
-    color: Colors.black,
-    fontWeight: FontWeight.w900,
-  );
+      fontSize: 22.sp,
+      color: Colors.black,
+      // fontWeight: FontWeight.w900,
+      fontWeight: FontWeight.w900);
 
   static final TextStyle title = TextStyle(
     fontSize: 18.sp,

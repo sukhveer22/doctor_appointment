@@ -5,7 +5,7 @@ class ProfileController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   Future<Doctors> fetchDoctorProfile(String doctorId) async {
-    final docSnapshot = await _firestore.collection('Doctors').doc(doctorId).get();
+    final docSnapshot = await _firestore.collection('Users').doc(doctorId).get();
     if (docSnapshot.exists) {
       return Doctors.fromMap(docSnapshot.data()!);
     } else {
@@ -14,6 +14,6 @@ class ProfileController {
   }
 
   Future<void> updateDoctorProfile(String doctorId, Map<String, dynamic> updatedData) async {
-    await _firestore.collection('Doctors').doc(doctorId).update(updatedData);
+    await _firestore.collection('Users').doc(doctorId).update(updatedData);
   }
 }

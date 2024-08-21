@@ -125,7 +125,7 @@ class ChatRoomController extends GetxController {
         .doc(firebaseUser!.uid)
         .set({'isTyping': typing});
   }
-  Future<void> sendImage() async {
+  Future<void> sendImage(String path) async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 

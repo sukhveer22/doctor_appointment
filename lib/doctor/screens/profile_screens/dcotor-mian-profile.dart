@@ -31,7 +31,17 @@ class _AllProfileState extends State<AllProfile> {
 
   Future<Doctors> fetchDoctorProfile(String doctorId) async {
     final docSnapshot =
-    await _firestore.collection('Doctors').doc(doctorId).get();
+        await _firestore.collection('Users').doc(doctorId).get();
+    if (docSnapshot.exists) {
+      return Doctors.fromMap(docSnapshot.data()!);
+    } else {
+      throw Exception('Doctor not found');
+    }
+  }
+
+  Future<Doctors> fetchUserProfile(String doctorId) async {
+    final docSnapshot =
+        await _firestore.collection('Users').doc(doctorId).get();
     if (docSnapshot.exists) {
       return Doctors.fromMap(docSnapshot.data()!);
     } else {
@@ -48,7 +58,13 @@ class _AllProfileState extends State<AllProfile> {
   Widget build(BuildContext context) {
     final User? firebaseUser = _auth.currentUser;
     return FutureBuilder<Doctors>(
-      future: firebaseUser != null ? fetchDoctorProfile(firebaseUser.uid) : Future.value(null),
+      future: userrole.selectedRole.value == UserRole.doctor
+          ? firebaseUser != null
+              ? fetchDoctorProfile(firebaseUser.uid)
+              : Future.value(null)
+          : firebaseUser != null
+              ? fetchUserProfile(firebaseUser.uid)
+              : Future.value(null),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Scaffold(
@@ -99,7 +115,7 @@ class _AllProfileState extends State<AllProfile> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius:
-                    BorderRadius.only(topRight: Radius.circular(70.r)),
+                        BorderRadius.only(topRight: Radius.circular(70.r)),
                   ),
                   child: SingleChildScrollView(
                     child: Column(
@@ -110,7 +126,7 @@ class _AllProfileState extends State<AllProfile> {
                           icon: Icons.person,
                           text: "Profile",
                           onTap: () => Get.to(
-                                  () => DoctorProfileScreen(doctorId: doctorId)),
+                              () => DoctorProfileScreen(doctorId: doctorId)),
                         ),
                         _buildOptionRow(
                           context,
@@ -233,11 +249,11 @@ class _AllProfileState extends State<AllProfile> {
   }
 
   Widget _buildOptionRow(
-      BuildContext context, {
-        required IconData icon,
-        required String text,
-        required VoidCallback onTap,
-      }) {
+    BuildContext context, {
+    required IconData icon,
+    required String text,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Row(
@@ -314,7 +330,7 @@ class _AllProfileState extends State<AllProfile> {
           TextButton(
             onPressed: () async {
               await _auth.signOut();
-              if (userrole.selectedRole == 'doctor') {
+              if (userrole.selectedRole.value == UserRole.doctor) {
                 Get.offAll(() => DoctorLogin());
               } else {
                 Get.offAll(() => LoginScreen());

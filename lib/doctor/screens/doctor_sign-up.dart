@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:doctor_appointment/doctor/controllers/doctor_sgin_controller.dart';
-import 'package:doctor_appointment/patient/screens/login_screen.dart';
 import 'package:doctor_appointment/role_method/select_role_controller.dart';
 import 'package:doctor_appointment/util/appTextStyle.dart';
 import 'package:doctor_appointment/util/app_color.dart';
@@ -100,8 +99,16 @@ class DoctorSign extends StatelessWidget {
                       'Phone Number',
                       controller.phoneNumberController,
                       'Enter your Phone Number'),
-                  _buildTextField('Category', controller.categoryIdController,
-                      'Enter your Category'),
+                  Text(
+                    'Category',
+                    style: AppTextStyles.header,
+                  ),
+                  Obx(
+                    () => _buildDropdownField(
+                      controller.selectedCategory.value,
+                      controller.setCategory,
+                    ),
+                  ),
                   _buildTextField('Description', controller.specialtyController,
                       'Enter your Description',
                       maxLines: 5),
@@ -190,6 +197,43 @@ class DoctorSign extends StatelessWidget {
         ),
         SizedBox(height: 10.h),
       ],
+    );
+  }
+
+  Widget _buildDropdownField(
+    Category selectedValue,
+    void Function(Category) onChanged,
+  ) {
+    return Container(
+      decoration: const BoxDecoration(
+          borderRadius: BorderRadius.all(Radius.circular(15))),
+      child: DropdownButtonFormField<Category>(
+        decoration: InputDecoration(
+          border: OutlineInputBorder(
+              borderRadius: BorderRadius.all(
+                Radius.circular(20),
+              ),
+              borderSide: BorderSide(color: Colors.white)),
+        ),
+        focusColor: Colors.white,
+        value: selectedValue,
+        dropdownColor: Colors.white,
+        onChanged: (Category? newValue) {
+          if (newValue != null) {
+            onChanged(newValue);
+          }
+        },
+        items:
+            Category.values.map<DropdownMenuItem<Category>>((Category value) {
+          return DropdownMenuItem<Category>(
+            value: value,
+            child: Text(
+              value.toString().split('.').last,
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18.sp),
+            ), // Display the category name
+          );
+        }).toList(),
+      ),
     );
   }
 }

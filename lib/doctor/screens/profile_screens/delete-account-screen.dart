@@ -69,7 +69,7 @@ class AccountDeleteScreen extends StatelessWidget {
 
     try {
       // Delete user data from Firestore
-      await FirebaseFirestore.instance.collection('Doctors')
+      await FirebaseFirestore.instance.collection('Users')
           .doc(user.uid)
           .delete();
       await user.delete();

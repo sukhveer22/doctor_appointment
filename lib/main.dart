@@ -1,4 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:doctor_appointment/patient/dashborad/dashboard.dart';
+import 'package:doctor_appointment/patient/screens/doctor-tap-screen/doctorheart-screen.dart';
+import 'package:doctor_appointment/patient/screens/home_screen.dart';
+import 'package:doctor_appointment/patient/screens/sacddf.dart';
 import 'package:doctor_appointment/role_method/select_role_controller.dart';
 import 'package:doctor_appointment/role_method/select_role_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -10,7 +14,6 @@ import 'package:doctor_appointment/util/app_config.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'doctor/screens/dahsborad/doctor-dashborad.dart';
 
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
@@ -21,6 +24,7 @@ void main() async {
 
 class MyApp extends StatelessWidget {
   final SelectRoleController userrole = Get.put(SelectRoleController());
+
   @override
   Widget build(BuildContext context) {
     return ScreenUtilInit(
@@ -33,6 +37,7 @@ class MyApp extends StatelessWidget {
             focusColor: Colors.white,
           ),
           home: _getInitialScreen(userrole),
+          // home: MyHomePage(title: "hal"),
         );
       },
     );
@@ -42,11 +47,27 @@ class MyApp extends StatelessWidget {
     User? user = FirebaseAuth.instance.currentUser;
 
     if (user != null) {
-      if(userrole.selectedRole.value == UserRole.doctor){
-        return Doctordashborad();
-      } else {
-        return DashboardScreen();
-      }
+      return StreamBuilder<DocumentSnapshot>(
+        stream: FirebaseFirestore.instance.collection('Users').doc(user.uid.toString()).snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator()); // Show loading indicator
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error loading data'));
+          } else if (!snapshot.hasData || !snapshot.data!.exists) {
+            return SelectRoleScreen() ;
+          } else {
+            var userData = snapshot.data!.data() as Map<String, dynamic>;
+            String role = userData['role'];
+
+            if (role.toString() == 'Doctor') {
+              return Doctordashborad();
+            } else {
+              return DashboardScreen();
+            }
+          }
+        },
+      );
     } else {
       return SelectRoleScreen();
     }

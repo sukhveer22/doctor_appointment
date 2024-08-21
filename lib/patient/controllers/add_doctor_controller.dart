@@ -22,7 +22,7 @@ class DoctorController extends GetxController {
     };
 
     try {
-      await FirebaseFirestore.instance.collection('doctors').add(doctor);
+      await FirebaseFirestore.instance.collection('Users').add(doctor);
     } catch (e) {
       Get.snackbar('Error', 'Failed to add doctor: ${e.toString()}');
     }

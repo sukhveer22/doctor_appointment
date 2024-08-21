@@ -51,7 +51,7 @@ class DashboardScreen extends StatelessWidget {
         },
         children: [
           HomeScreen(),
-          AppointmentScreen(appointmentId: "mpixsswLimYMyLFVXCpcUxymjlj2"),
+          AppointmentScreen(doctorId: "mpixsswLimYMyLFVXCpcUxymjlj2"),
           AppointmentListScreen(),
           AllProfile()
         ],

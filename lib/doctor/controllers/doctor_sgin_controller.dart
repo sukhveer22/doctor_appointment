@@ -14,13 +14,22 @@ import 'package:doctor_appointment/models/user_model.dart';
 
 import '../screens/profile_screens/doctorprofile_screen.dart';
 
+enum Category {
+  Dentist,
+  Eyes,
+  Doctor,
+  Heart,
+  other,
+}
+
 class DoctorSignController extends GetxController {
-  var nameController = TextEditingController();
+  var nameController = TextEditingController(text: "Dr.");
   var emailController = TextEditingController();
   var phoneNumberController = TextEditingController();
-  var categoryIdController = TextEditingController();
+
   var passwordController = TextEditingController();
   var specialtyController = TextEditingController();
+  var selectedCategory =Category.Dentist.obs;
 
   var isPasswordHidden = true.obs;
   var isLoading = false.obs;
@@ -30,16 +39,23 @@ class DoctorSignController extends GetxController {
     isPasswordHidden.value = !isPasswordHidden.value;
   }
 
+  void setCategory(Category category) {
+    selectedCategory.value = category;
+  }
+
   Future<void> signUp() async {
     if (_validateInputs()) {
       try {
         isLoading.value = true;
 
+        print("Signing up...");
         UserCredential userCredential =
             await FirebaseAuth.instance.createUserWithEmailAndPassword(
           email: emailController.text.trim(),
           password: passwordController.text.trim(),
         );
+
+        print("User signed up: ${userCredential.user?.uid}");
 
         String? profilePictureUrl;
         if (imageFile.value != null) {
@@ -49,6 +65,7 @@ class DoctorSignController extends GetxController {
           final uploadTask = storageRef.putFile(File(imageFile.value!.path));
           final snapshot = await uploadTask.whenComplete(() {});
           profilePictureUrl = await snapshot.ref.getDownloadURL();
+          print("Profile picture URL: $profilePictureUrl");
         }
 
         await userCredential.user?.updatePhotoURL(profilePictureUrl);
@@ -62,7 +79,8 @@ class DoctorSignController extends GetxController {
           email: emailController.text.trim(),
           phoneNumber: phoneNumberController.text.trim(),
           profilePictureUrl: profilePictureUrl,
-          categoryId: categoryIdController.text.trim(),
+          categoryId: selectedCategory.value.toString().trim(),
+          role: 'Doctor', // Set the role as 'Doctor'
         );
 
         await saveDoctorToFirestore(doctor);
@@ -71,6 +89,7 @@ class DoctorSignController extends GetxController {
         Get.off(Doctordashborad());
         Get.snackbar('Success', 'Signed up successfully');
       } catch (e) {
+        print("Error during sign-up: $e");
         Get.snackbar('Error', _getErrorMessage(e));
       } finally {
         isLoading.value = false;
@@ -83,7 +102,7 @@ class DoctorSignController extends GetxController {
         specialtyController.text.trim().isEmpty ||
         emailController.text.trim().isEmpty ||
         passwordController.text.trim().isEmpty ||
-        categoryIdController.text.trim().isEmpty) {
+        selectedCategory.value.toString().trim().isEmpty) {
       Get.snackbar('Error', 'Please fill in all fields.');
       return false;
     }
@@ -103,7 +122,7 @@ class DoctorSignController extends GetxController {
   Future<void> saveDoctorToFirestore(Doctors doctor) async {
     try {
       final doctorRef =
-          FirebaseFirestore.instance.collection('Doctors').doc(doctor.id);
+          FirebaseFirestore.instance.collection('Users').doc(doctor.id);
       await doctorRef.set(doctor.toMap());
     } catch (e) {
       print('Error saving doctor to Firestore: $e');

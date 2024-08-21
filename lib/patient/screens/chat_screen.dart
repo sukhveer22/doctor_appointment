@@ -14,24 +14,25 @@ import 'package:image_picker/image_picker.dart';
 
 class ChatScreen extends StatefulWidget {
   final ChatRoomModel chatroom;
+  final String doctorid;
 
-  ChatScreen({Key? key, required this.chatroom}) : super(key: key);
+  ChatScreen({Key? key, required this.chatroom, required this.doctorid}) : super(key: key);
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  late UserModel targetUser;
   late DocumentSnapshot userDoc;
   late final ChatRoomController controller;
+  UserModel? targetUser; // Declare targetUser to store the fetched data
 
   @override
   void initState() {
     super.initState();
     controller = Get.put(ChatRoomController(
       chatroom: widget.chatroom,
-      Doctorid: 'mpixsswLimYMyLFVXCpcUxymjlj2', // Provide the Doctorid here
+      Doctorid: widget.doctorid,
     ));
     fetchDoctorData();
   }
@@ -41,7 +42,7 @@ class _ChatScreenState extends State<ChatScreen> {
       userDoc = await FirebaseFirestore.instance
           .collection('Users')
           .doc(widget.chatroom.participants?.keys
-              .firstWhere((id) => id != FirebaseAuth.instance.currentUser!.uid))
+          .firstWhere((id) => id != FirebaseAuth.instance.currentUser!.uid))
           .get();
       if (userDoc.exists) {
         setState(() {
@@ -61,7 +62,7 @@ class _ChatScreenState extends State<ChatScreen> {
       final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
       if (image != null) {
-        await controller.sendImage();
+        await controller.sendImage(image.path); // Pass the image path to the sendImage method
       }
     } catch (e) {
       print("Error picking image: $e");
@@ -74,12 +75,12 @@ class _ChatScreenState extends State<ChatScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.primaryColor,
         title: Obx(
-          () => Row(
+              () => Row(
             children: [
               CircleAvatar(
                 backgroundColor: Colors.grey[300],
                 backgroundImage: NetworkImage(
-                  targetUser.profilePicture ??
+                  targetUser?.profilePicture ??
                       'https://firebasestorage.googleapis.com/v0/b/task-5d3a8.appspot.com/o/profilepictures%2FWbDCkza2u8doplOz2mhuQk1nT9h2?alt=media&token=458251cb-126f-4f7f-9d4c-b4845346c2e3',
                 ),
               ),
@@ -87,7 +88,7 @@ class _ChatScreenState extends State<ChatScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(targetUser.name ?? 'No Name'),
+                  Text(targetUser?.name ?? 'No Name'),
                   if (controller.targetUserTyping.value)
                     const Text(
                       "typing...",
@@ -200,8 +201,8 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   IconButton(
                     onPressed: () {
-                      controller.sendMessage(
-                          'Your message here'); // Provide required arguments
+                      controller.sendMessage(controller.messageController.text); // Use the message text
+                      controller.messageController.clear();
                       controller.updateTypingStatus(false);
                     },
                     icon: Container(

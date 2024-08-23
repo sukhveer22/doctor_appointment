@@ -6,6 +6,7 @@ import 'package:doctor_appointment/doctor/screens/profile_screens/settings_scree
 import 'package:doctor_appointment/models/doctor_model.dart';
 import 'package:doctor_appointment/patient/screens/login_screen.dart';
 import 'package:doctor_appointment/role_method/select_role_controller.dart';
+import 'package:doctor_appointment/role_method/select_role_screen.dart';
 import 'package:doctor_appointment/util/appTextStyle.dart';
 import 'package:doctor_appointment/util/app_color.dart';
 import 'package:doctor_appointment/util/app_config.dart';
@@ -329,12 +330,7 @@ class _AllProfileState extends State<AllProfile> {
           ),
           TextButton(
             onPressed: () async {
-              await _auth.signOut();
-              if (userrole.selectedRole.value == UserRole.doctor) {
-                Get.offAll(() => DoctorLogin());
-              } else {
-                Get.offAll(() => LoginScreen());
-              }
+             Get.to(SelectRoleScreen());
             },
             child: Text('Logout'),
           ),

@@ -2,7 +2,8 @@ class MessageModel {
   String? messageid;
   String? sender;
   String? text;
-  String? imageUrl;  // New field for image URL
+  String? imageUrl;  // Existing field for image URL
+  String? videoUrl;  // New field for video URL
   bool? seen;
   DateTime? createdon;
 
@@ -10,7 +11,8 @@ class MessageModel {
     this.messageid,
     this.sender,
     this.text,
-    this.imageUrl,   // Include imageUrl in the constructor
+    this.imageUrl,
+    this.videoUrl,  // Include videoUrl in the constructor
     this.seen,
     this.createdon,
   });
@@ -20,6 +22,7 @@ class MessageModel {
     sender = map["sender"];
     text = map["text"];
     imageUrl = map["imageUrl"];   // Extract imageUrl from map
+    videoUrl = map["videoUrl"];   // Extract videoUrl from map
     seen = map["seen"];
     createdon = map["createdon"]?.toDate();
   }
@@ -29,7 +32,8 @@ class MessageModel {
       "messageid": messageid,
       "sender": sender,
       "text": text,
-      "imageUrl": imageUrl,  // Include imageUrl in the map
+      "imageUrl": imageUrl,
+      "videoUrl": videoUrl,  // Include videoUrl in the map
       "seen": seen,
       "createdon": createdon
     };

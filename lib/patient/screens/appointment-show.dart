@@ -11,7 +11,8 @@ class AppointmentListScreen extends StatelessWidget {
         title: Text('Appointments'),
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('appointments').snapshots(),
+        stream:
+            FirebaseFirestore.instance.collection('appointments').snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
@@ -26,7 +27,8 @@ class AppointmentListScreen extends StatelessWidget {
           }
 
           final appointments = snapshot.data!.docs
-              .map((doc) => AppointmentModel.fromMap(doc.data() as Map<String, dynamic>))
+              .map((doc) =>
+                  AppointmentModel.fromMap(doc.data() as Map<String, dynamic>))
               .toList();
 
           return ListView.builder(
@@ -35,13 +37,14 @@ class AppointmentListScreen extends StatelessWidget {
               final appointment = appointments[index];
               return ListTile(
                 leading: CircleAvatar(
-                  backgroundImage: appointment.doctorImage.isNotEmpty
-                      ? AssetImage(appointment.doctorImage)
-                      : NetworkImage('https://via.placeholder.com/150'), // Placeholder if image URL is empty
+                  backgroundImage: appointment.doctorImage.toString().isNotEmpty
+                      ? AssetImage(appointment.doctorImage.toString())
+                      : NetworkImage(
+                          'https://via.placeholder.com/150'), // Placeholder if image URL is empty
                 ),
-                title: Text(appointment.doctorName),
+                title: Text(appointment.doctorName.toString()),
                 subtitle: Text(
-                  'Appointment with ${appointment.userName} on ${DateFormat.yMMMd().format(appointment.appointmentDate)}',
+                  'Appointment with ${appointment.userName} on ${DateFormat.yMMMd().format(appointment.appointmentDate as DateTime)}',
                 ),
               );
             },

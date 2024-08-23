@@ -1,230 +1,301 @@
-import 'dart:io';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:doctor_appointment/models/chat_model.dart';
-import 'package:doctor_appointment/models/message_model.dart';
 import 'package:doctor_appointment/models/user_model.dart';
-import 'package:doctor_appointment/patient/controllers/chat-room_controller.dart';
-import 'package:doctor_appointment/util/app_color.dart';
+import 'package:doctor_appointment/patient/controllers/chat-controller.dart';
 import 'package:doctor_appointment/util/chat_method.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:doctor_appointment/util/app_color.dart';
+import 'package:doctor_appointment/util/custom_text_field.dart';
 
-class ChatScreen extends StatefulWidget {
+import '../controllers/chat-room_controller.dart';
+
+class ChatRoomPage extends StatefulWidget {
+  final String targetUserId;
   final ChatRoomModel chatroom;
-  final String doctorid;
 
-  ChatScreen({Key? key, required this.chatroom, required this.doctorid}) : super(key: key);
+  ChatRoomPage({
+    Key? key,
+    required this.targetUserId,
+    required this.chatroom,
+  }) : super(key: key);
 
   @override
-  State<ChatScreen> createState() => _ChatScreenState();
+  State<ChatRoomPage> createState() => _ChatRoomPageState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
-  late DocumentSnapshot userDoc;
-  late final ChatRoomController controller;
-  UserModel? targetUser; // Declare targetUser to store the fetched data
+class _ChatRoomPageState extends State<ChatRoomPage> {
+  late ChatController _controller;
+  final TextEditingController _chatController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    controller = Get.put(ChatRoomController(
+    print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${widget.targetUserId}");
+    _controller = Get.put(ChatController(
+      targetUserId: widget.targetUserId,
       chatroom: widget.chatroom,
-      Doctorid: widget.doctorid,
     ));
-    fetchDoctorData();
+    // Fetch data and listen for messages
+    _controller.fetchTargetUserData(widget.targetUserId);
+    _controller.messages.listen((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToBottom();
+      });
+    });
   }
 
-  Future<void> fetchDoctorData() async {
-    try {
-      userDoc = await FirebaseFirestore.instance
-          .collection('Users')
-          .doc(widget.chatroom.participants?.keys
-          .firstWhere((id) => id != FirebaseAuth.instance.currentUser!.uid))
-          .get();
-      if (userDoc.exists) {
-        setState(() {
-          targetUser = UserModel.fromDocument(userDoc);
-        });
-      } else {
-        print("Doctor data not found.");
-      }
-    } catch (e) {
-      print("Error fetching doctor data: $e");
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
     }
   }
 
-  Future<void> _pickImage() async {
-    try {
-      final ImagePicker picker = ImagePicker();
-      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+  void _showFullScreenImage(BuildContext context, {required String imageUrl}) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.black,
+          child: Stack(
+            children: [
+              Center(
+                child: Image.network(
+                  imageUrl,
+                  fit: BoxFit.contain,
+                  width: double.infinity,
+                  height: double.infinity,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Center(
+                      child: Icon(Icons.error, color: Colors.red, size: 40),
+                    );
+                  },
+                ),
+              ),
+              Positioned(
+                top: 40,
+                right: 20,
+                child: IconButton(
+                  icon: Icon(Icons.close, color: Colors.white, size: 30),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ),
+              Positioned(
+                bottom: 40,
+                right: 20,
+                child: IconButton(
+                  icon: Icon(Icons.download, color: Colors.white, size: 30),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    _controller.downloadFile(
+                        imageUrl, imageUrl.split('/').last);
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
-      if (image != null) {
-        await controller.sendImage(image.path); // Pass the image path to the sendImage method
-      }
-    } catch (e) {
-      print("Error picking image: $e");
-    }
+  void _showClearChatDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Clear Chat'),
+          content: Text('Are you sure you want to clear the chat?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop(); // Close the dialog
+                await _controller.clearChat(); // Clear the chat
+              },
+              child: Text('Clear'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: AppColors.primaryColor,
-        title: Obx(
-              () => Row(
+    return GestureDetector(
+      onTap: () {
+        FocusManager.instance.primaryFocus?.unfocus();
+      },
+      child: Scaffold(
+        body: Container(
+          decoration: BoxDecoration(
+            color: Colors.blueGrey.shade300,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              CircleAvatar(
-                backgroundColor: Colors.grey[300],
-                backgroundImage: NetworkImage(
-                  targetUser?.profilePicture ??
-                      'https://firebasestorage.googleapis.com/v0/b/task-5d3a8.appspot.com/o/profilepictures%2FWbDCkza2u8doplOz2mhuQk1nT9h2?alt=media&token=458251cb-126f-4f7f-9d4c-b4845346c2e3',
+              Container(
+                height: 90.h,
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
+                decoration: BoxDecoration(
+                  color: Colors.white70,
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(25.r),
+                    bottomRight: Radius.circular(25.r),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(targetUser?.name ?? 'No Name'),
-                  if (controller.targetUserTyping.value)
-                    const Text(
-                      "typing...",
-                      style: TextStyle(fontSize: 15, color: Colors.black),
+                child: Obx(() {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 12.0),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.arrow_back_ios_new),
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                        ),
+                        CircleAvatar(
+                          radius: 25.r,
+                          backgroundImage: NetworkImage(
+                            _controller.targetUserImage.value ??
+                                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRHCuAeu1euCiebE3y2qi8JJah3n_8TLJwNyg&s",
+                          ),
+                        ),
+                        SizedBox(width: 8.w),
+                        Expanded(
+                          child: Text(
+                            _controller.targetUserName.value,
+                            style: TextStyle(
+                              color: AppColors.textColor,
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: Container(
+                            width: 40.w,
+                            height: 40.h,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(Icons.clear_all),
+                          ),
+                          onPressed: _showClearChatDialog,
+                        ),
+                      ],
                     ),
-                ],
+                  );
+                }),
+              ),
+              Expanded(
+                child: Obx(() {
+                  if (_controller.messages.isEmpty) {
+                    return Center(child: Text("Say hi to your new friend"));
+                  } else {
+                    return ListView.builder(
+                      controller: _scrollController,
+                      padding: EdgeInsets.symmetric(horizontal: 8.w),
+                      itemCount: _controller.messages.length,
+                      itemBuilder: (context, index) {
+                        final message = _controller.messages[index].data()
+                            as Map<String, dynamic>;
+                        bool isFromTargetUser = message['sender'] ==
+                            _controller.targetUserName.value;
+                        return ChatBubble(
+                          isFromTargetUser: isFromTargetUser,
+                          message: message,
+                          onImageTap: (imageUrl) =>
+                              _showFullScreenImage(context, imageUrl: imageUrl),
+                        );
+                      },
+                    );
+                  }
+                }),
+              ),
+              Obx(() => _controller.isTyping.value
+                  ? Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20.w),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text('Typing...', style: TextStyle(fontSize: 14.sp)),
+                        ],
+                      ),
+                    )
+                  : SizedBox.shrink()),
+              Container(
+                height: 60.h,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.white70,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(25.r),
+                    topRight: Radius.circular(25.r),
+                  ),
+                ),
+                child: Padding(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: Container(
+                          width: 40.w,
+                          height: 40.h,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.image),
+                        ),
+                        onPressed: () => _controller.sendImage(),
+                      ),
+                      Expanded(
+                        child: CustomTextField(
+                          focusedBorderColor: AppColors.textColor,
+                          borderColor: AppColors.textColor,
+                          hintText: 'Type a message',
+                          hintStyle: TextStyle(
+                            color: AppColors.textColor,
+                          ),
+                          controller: _chatController,
+                        ),
+                      ),
+                      IconButton(
+                        icon: Container(
+                          width: 40.w,
+                          height: 40.h,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.send),
+                        ),
+                        onPressed: () async {
+                          await _controller
+                              .sendMessage(_chatController.text.toString());
+                          _chatController.clear();
+                        },
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.exit_to_app),
-            onPressed: () {
-              FirebaseAuth.instance.signOut().then((_) {
-                Get.offAllNamed('/login');
-              });
-            },
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: Obx(() {
-                if (controller.messages.isEmpty) {
-                  return const Center(child: Text("Say hi to your new friend"));
-                } else {
-                  return Column(
-                    children: [
-                      Expanded(
-                        child: ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          reverse: true,
-                          itemCount: controller.messages.length,
-                          itemBuilder: (context, index) {
-                            MessageModel message = controller.messages[index];
-                            return ChatBubble(message: message);
-                          },
-                        ),
-                      ),
-                      if (controller.isTyping.value)
-                        const Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              Text(
-                                "Typing...  ",
-                                style: TextStyle(),
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ).paddingOnly(bottom: 20);
-                }
-              }),
-            ),
-            Container(
-              height: 60.h,
-              decoration: BoxDecoration(
-                color: AppColors.primaryColor,
-                borderRadius: BorderRadius.only(
-                  topRight: Radius.circular(12.r),
-                  topLeft: Radius.circular(12.r),
-                ),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: _pickImage,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Icon(
-                          Icons.perm_media,
-                          color: AppColors.primaryColor,
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 5),
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.all(Radius.circular(14)),
-                        color: Colors.white,
-                      ),
-                      child: TextFormField(
-                        controller: controller.messageController,
-                        maxLines: null,
-                        decoration: const InputDecoration(
-                          hintText: "Enter message",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(14)),
-                          ),
-                        ),
-                        onChanged: (text) {
-                          controller.updateTypingStatus(text.isNotEmpty);
-                        },
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      controller.sendMessage(controller.messageController.text); // Use the message text
-                      controller.messageController.clear();
-                      controller.updateTypingStatus(false);
-                    },
-                    icon: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white,
-                      ),
-                      child: Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Icon(
-                            Icons.send,
-                            color: AppColors.primaryColor,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
         ),
       ),
     );

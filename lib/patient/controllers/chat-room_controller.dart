@@ -1,221 +1,248 @@
 import 'dart:io';
 import 'package:doctor_appointment/models/chat_model.dart';
 import 'package:doctor_appointment/models/message_model.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:uuid/uuid.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:uuid/uuid.dart';
+import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as path;
 
-class ChatRoomController extends GetxController {
+class ChatController extends GetxController {
+  ChatController({
+    required this.chatroom,
+    required this.targetUserId,
+  });
+
+  final String targetUserId;
   final ChatRoomModel chatroom;
-  final String Doctorid;
-
-  final User? firebaseUser = FirebaseAuth.instance.currentUser;
-  RxBool seen = false.obs;
-
-  var messages = <MessageModel>[].obs;
+  User? currentUser = FirebaseAuth.instance.currentUser;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  RxList<QueryDocumentSnapshot> messages = <QueryDocumentSnapshot>[].obs;
   final messageController = TextEditingController();
   var isTyping = false.obs;
   var targetUserTyping = false.obs;
+  RxString targetUserImage = "".obs;
+  RxString targetUserName = "".obs;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
+  final ImagePicker _picker = ImagePicker();
 
-  ChatRoomController({required this.chatroom, required this.Doctorid});
+
 
   @override
   void onInit() {
     super.onInit();
-    fetchMessages();
-    monitorTyping(Doctorid);
+    _listenToMessages();
+    monitorTyping();
+    fetchTargetUserData(targetUserId); // Fetch user data when initialized
+  }
+  Future<void> sendImage() async {
+    try {
+      // Pick an image from the gallery
+      final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile == null) {
+        Get.snackbar("Error", "No image selected",
+            snackPosition: SnackPosition.BOTTOM);
+        return;
+      }
+
+      File imageFile = File(pickedFile.path);
+      String fileName = Uuid().v1() + '.' + imageFile.path.split('.').last;
+
+      // Upload image to Firebase Storage
+      Reference storageRef =
+      _storage.ref().child('chat_images').child(fileName);
+      UploadTask uploadTask = storageRef.putFile(imageFile);
+      TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() {});
+      String imageUrl = await taskSnapshot.ref.getDownloadURL();
+
+      // Send image message
+      MessageModel newMessage = MessageModel(
+        messageid: Uuid().v1(),
+        sender: currentUser?.uid,
+        createdon: DateTime.now(),
+        text: '',
+        imageUrl: imageUrl,
+        seen: false,
+      );
+
+      await _firestore
+          .collection("chatRooms")
+          .doc(chatroom.chatroomid)
+          .collection("messages")
+          .doc(newMessage.messageid)
+          .set(newMessage.toMap());
+
+      chatroom.lastMessage =
+      'Image'; // Optionally update chat room's last message
+      await _firestore
+          .collection("chatRooms")
+          .doc(chatroom.chatroomid)
+          .set(chatroom.toMap());
+
+      Get.snackbar("Success", "Image sent successfully",
+          snackPosition: SnackPosition.BOTTOM);
+    } catch (e) {
+      Get.snackbar("Error", "Failed to send image: $e",
+          snackPosition: SnackPosition.BOTTOM);
+    }
+  }
+  Future<void> clearChat() async {
+    try {
+      // Reference to the chat room messages collection
+      final messagesRef = _firestore
+          .collection('chatRooms')
+          .doc(chatroom.chatroomid)
+          .collection('messages');
+
+      final snapshot = await messagesRef.get();
+
+      if (snapshot.docs.isNotEmpty) {
+        final batch = _firestore.batch();
+        for (var doc in snapshot.docs) {
+          batch.delete(doc.reference);
+        }
+        await batch.commit();
+
+        chatroom.lastMessage = '';
+        await _firestore
+            .collection('chatRooms')
+            .doc(chatroom.chatroomid)
+            .set(chatroom.toMap());
+
+        Get.snackbar("Success", "Chat cleared successfully",
+            snackPosition: SnackPosition.BOTTOM);
+      } else {
+        Get.snackbar("Info", "No messages to clear",
+            snackPosition: SnackPosition.BOTTOM);
+      }
+    } catch (e) {
+      Get.snackbar("Error", "Failed to clear chat: $e",
+          snackPosition: SnackPosition.BOTTOM);
+    }
   }
 
-  void fetchMessages() {
-    FirebaseFirestore.instance
-        .collection("chatRoom")
+  Future<void> downloadFile(String imageUrl, String fileName) async {
+    try {
+      final dio = Dio();
+
+      final directory = await getTemporaryDirectory();
+
+      final filePath = '${directory.path}/$fileName';
+
+      await dio.download(imageUrl, filePath);
+
+      print('File downloaded to: $filePath');
+    } catch (e) {
+      print('Error downloading file: $e');
+    }
+  }
+
+  Future<void> fetchTargetUserData(String targetUserId) async {
+    try {
+      DocumentSnapshot doc =
+      await _firestore.collection('Users').doc(targetUserId).get();
+      targetUserImage.value = doc["profilePictureUrl"];
+      targetUserName.value = doc["name"];
+    } catch (e) {
+      Get.snackbar("Error", "Failed to fetch user data: $e",
+          snackPosition: SnackPosition.BOTTOM);
+    }
+  }
+
+  void _listenToMessages() {
+    _firestore
+        .collection('chatRooms')
         .doc(chatroom.chatroomid)
-        .collection("messages")
-        .orderBy("createdon", descending: true)
+        .collection('messages')
+        .orderBy('createdon')
         .snapshots()
         .listen((snapshot) {
       if (snapshot.docs.isNotEmpty) {
-        messages.value = snapshot.docs
-            .map((doc) =>
-            MessageModel.fromMap(doc.data() as Map<String, dynamic>))
-            .toList();
+        messages.value = snapshot.docs;
       }
+    }).onError((error) {
+      Get.snackbar("Error", "Failed to load messages: $error",
+          snackPosition: SnackPosition.BOTTOM);
     });
   }
 
-  void sendMessage(String Doctorid) async {
-    if (firebaseUser == null) return;
 
-    if (Doctorid != firebaseUser!.uid) {
-      FirebaseFirestore.instance
-          .collection('Users')
-          .doc(firebaseUser!.uid)
-          .set({'active': true, "seen": true}, SetOptions(merge: true))
-          .then((_) {
-        print('User status updated');
-      }).catchError((error) {
-        print('Failed to update user status: $error');
-      });
-    }
-
+   sendMessage(String text) async {
     String msg = messageController.text.trim();
     messageController.clear();
 
     if (msg.isNotEmpty) {
       MessageModel newMessage = MessageModel(
         messageid: Uuid().v1(),
-        sender: firebaseUser!.uid,
+        sender: currentUser?.uid ?? "",
         createdon: DateTime.now(),
         text: msg,
         seen: false,
       );
 
       try {
-        await FirebaseFirestore.instance
-            .collection("chatRoom")
+        await _firestore
+            .collection("chatRooms")
             .doc(chatroom.chatroomid)
             .collection("messages")
             .doc(newMessage.messageid)
-            .set(newMessage.toMap());
+            .set(text as Map<String, dynamic>);
 
         chatroom.lastMessage = msg;
-        await FirebaseFirestore.instance
-            .collection("chatRoom")
+        await _firestore
+            .collection("chatRooms")
             .doc(chatroom.chatroomid)
             .set(chatroom.toMap());
 
         print("Message Sent!");
       } catch (e) {
-        Get.snackbar("Error", e.toString(),
+        Get.snackbar("Error", "Failed to send message: $e",
             snackPosition: SnackPosition.BOTTOM);
       }
     }
   }
 
-  void monitorTyping(String Doctorid) {
-    FirebaseFirestore.instance
-        .collection("chatRoom")
+
+  void monitorTyping() {
+    _firestore
+        .collection("chatRooms")
         .doc(chatroom.chatroomid)
         .collection("typing")
         .snapshots()
         .listen((snapshot) {
       for (var doc in snapshot.docs) {
-        if (doc.id == firebaseUser?.uid) {
+        if (doc.id == currentUser?.uid) {
           isTyping.value = doc.data()['isTyping'] ?? false;
-        } else if (doc.id == Doctorid) {
+        } else if (doc.id == targetUserId) {
           targetUserTyping.value = doc.data()['isTyping'] ?? false;
         }
       }
+    }).onError((error) {
+      Get.snackbar("Error", "Failed to monitor typing: $error",
+          snackPosition: SnackPosition.BOTTOM);
     });
   }
 
+  // Update typing status
   void updateTypingStatus(bool typing) {
-    if (firebaseUser == null) return;
-
-    FirebaseFirestore.instance
-        .collection("chatRoom")
+    _firestore
+        .collection("chatRooms")
         .doc(chatroom.chatroomid)
         .collection("typing")
-        .doc(firebaseUser!.uid)
-        .set({'isTyping': typing});
-  }
-  Future<void> sendImage(String path) async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-
-    if (pickedFile == null) return;
-
-    File imageFile = File(pickedFile.path);
-
-    try {
-      String fileName = Uuid().v1();
-      Reference storageRef = FirebaseStorage.instance
-          .ref()
-          .child("chat_images")
-          .child(fileName);
-
-      UploadTask uploadTask = storageRef.putFile(imageFile);
-      TaskSnapshot snapshot = await uploadTask;
-      String downloadUrl = await snapshot.ref.getDownloadURL();
-
-      MessageModel imageMessage = MessageModel(
-        messageid: Uuid().v1(),
-        sender: firebaseUser!.uid,
-        createdon: DateTime.now(),
-        text: "[Image]",  // You can put a placeholder text here
-        imageUrl: downloadUrl,  // Store the image URL here
-        seen: false,
-      );
-
-      await FirebaseFirestore.instance
-          .collection("chatRoom")
-          .doc(chatroom.chatroomid)
-          .collection("messages")
-          .doc(imageMessage.messageid)
-          .set(imageMessage.toMap());
-
-      chatroom.lastMessage = "[Image]";
-      await FirebaseFirestore.instance
-          .collection("chatRoom")
-          .doc(chatroom.chatroomid)
-          .set(chatroom.toMap());
-
-      print("Image Sent!");
-    } catch (e) {
-      Get.snackbar("Error", e.toString(),
+        .doc(currentUser?.uid.toString())
+        .set({'isTyping': typing}).catchError((error) {
+      Get.snackbar("Error", "Failed to update typing status: $error",
           snackPosition: SnackPosition.BOTTOM);
-    }
-  }
-
-
-  Future<File?> downloadImage(String imageUrl) async {
-    try {
-      Directory appDocDir = await getApplicationDocumentsDirectory();
-      String filePath = path.join(appDocDir.path, path.basename(imageUrl));
-
-      File downloadToFile = File(filePath);
-      await FirebaseStorage.instance.refFromURL(imageUrl).writeToFile(downloadToFile);
-
-      return downloadToFile;
-    } catch (e) {
-      Get.snackbar("Error", e.toString(),
-          snackPosition: SnackPosition.BOTTOM);
-      return null;
-    }
-  }
-
-  void viewImageFullScreen(String imageUrl) {
-    Get.to(() => FullScreenImageView(imageUrl: imageUrl));
+    });
   }
 
   @override
   void onClose() {
     messageController.dispose();
     super.onClose();
-  }
-}
-
-class FullScreenImageView extends StatelessWidget {
-  final String imageUrl;
-
-  FullScreenImageView({required this.imageUrl});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-      ),
-      body: Center(
-        child: Image.network(imageUrl),
-      ),
-    );
   }
 }

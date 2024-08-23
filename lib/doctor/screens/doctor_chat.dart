@@ -15,7 +15,6 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final User? firebaseUser = FirebaseAuth.instance.currentUser;
 
-  // Define the text style here
   final TextStyle titleStyle = TextStyle(
     fontSize: 18,
     fontWeight: FontWeight.bold,
@@ -30,41 +29,61 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
       return null;
     }
 
-    final chatroomSnapshot = await _firestore
-        .collection('chatRoom')
-        .where('participants.$currentUserId', isEqualTo: true)
-        .where('participants.$doctorId', isEqualTo: true)
-        .limit(1)
-        .get();
+    try {
+      final chatroomSnapshot = await _firestore
+          .collection('chatRoom')
+          .where('participants.$currentUserId', isEqualTo: true)
+          .where('participants.$doctorId', isEqualTo: true)
+          .limit(1)
+          .get();
 
-    if (chatroomSnapshot.docs.isNotEmpty) {
-      return ChatRoomModel.fromMap(
-          chatroomSnapshot.docs.first.data() as Map<String, dynamic>);
+      if (chatroomSnapshot.docs.isNotEmpty) {
+        return ChatRoomModel.fromMap(
+            chatroomSnapshot.docs.first.data() as Map<String, dynamic>);
+      }
+
+      final newChatRoom = ChatRoomModel(
+        chatroomid: Uuid().v1(),
+        participants: {
+          currentUserId: true,
+          doctorId: true,
+        },
+        lastMessage: '',
+      );
+
+      await _firestore
+          .collection('chatRoom')
+          .doc(newChatRoom.chatroomid)
+          .set(newChatRoom.toMap());
+
+      return newChatRoom;
+    } catch (e) {
+      print('Error getting or creating chat room: $e');
+      return null;
     }
+  }
 
-    // If no chatroom exists, create a new one
-    final newChatRoom = ChatRoomModel(
-      chatroomid: Uuid().v1(),
-      participants: {
-        currentUserId: true,
-        doctorId: true,
-      },
-      lastMessage: '',
-    );
-
-    await _firestore
-        .collection('chatRoom')
-        .doc(newChatRoom.chatroomid)
-        .set(newChatRoom.toMap());
-
-    return newChatRoom;
+  Future<void> _updateUserStatus(String userId) async {
+    try {
+      await _firestore
+          .collection('Users')
+          .doc(userId)
+          .update({"seen": false});
+    } catch (e) {
+      print('Failed to update user status: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to update user status.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Active Users', style: titleStyle), // Apply text style here
+        title: Text('Active Users', style: titleStyle),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: _firestore
@@ -77,7 +96,8 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
           }
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return Center(child: Text('No active users found.', style: titleStyle));
+            return Center(
+                child: Text('No active users found.', style: titleStyle));
           }
 
           return ListView.builder(
@@ -91,53 +111,39 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                 leading: CircleAvatar(
                   backgroundColor: Colors.grey[300],
                   backgroundImage: NetworkImage(
-                    userData['profilePicture'] ?? 'https://via.placeholder.com/150',
+                    userData['profilePicture'] ??
+                        'https://via.placeholder.com/150',
                   ),
                 ),
                 title: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(userData['name'] ?? 'No Name', style: titleStyle), // Apply text style here
+                    Text(userData['name'] ?? 'No Name', style: titleStyle),
                     userData['seen'] == true
                         ? Container(
                       width: 15,
                       height: 15,
                       decoration: BoxDecoration(
-                          shape: BoxShape.circle, color: Colors.green,),
+                        shape: BoxShape.circle,
+                        color: Colors.green,
+                      ),
                     )
-                        : Container(
-
-                    ),
+                        : Container(),
                   ],
                 ),
                 onTap: () async {
-                  try {
-                    print('User status updated');
+                  final chatroomModel = await getChatRoomModel(userId);
 
-                    var chatroomModel = await getChatRoomModel(userId);
-
-                    if (chatroomModel != null) {
-                      Get.to(() => ChatScreen(
-                        chatroom: chatroomModel, doctorid: '',
-                      ));
-                      if ("hKRefmYs2wNYzhlpUo9miuDUFMZ2" == firebaseUser?.uid.toString()) {
-                        await FirebaseFirestore.instance
-                            .collection('Users')
-                            .doc(userData["id"])
-                            .set({"seen": false}, SetOptions(merge: true));
-                      }
-                    } else {
-                      Get.snackbar(
-                        'Error',
-                        'Unable to create or fetch chatroom.',
-                        snackPosition: SnackPosition.BOTTOM,
-                      );
-                    }
-                  } catch (e) {
-                    print('Failed to update user status: $e');
+                  if (chatroomModel != null) {
+                    Get.to(() => ChatRoomPage(
+                      targetUserId: userId,
+                      chatroom: chatroomModel,
+                    ));
+                    await _updateUserStatus(userId);
+                  } else {
                     Get.snackbar(
                       'Error',
-                      'Failed to update user status.',
+                      'Unable to create or fetch chatroom.',
                       snackPosition: SnackPosition.BOTTOM,
                     );
                   }

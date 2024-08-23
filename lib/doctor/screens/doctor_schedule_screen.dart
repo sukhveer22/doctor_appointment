@@ -186,7 +186,7 @@ class DoctorScheduleScreen extends StatelessWidget {
           text: 'Save Appointment',
           textColor: Colors.black,
           color: AppColors.primaryColor,
-          isLoading: appointmentController.saveDataLoading,
+          isLoading: appointmentController.saveDataLoading.value,
         ),
       ),
     );

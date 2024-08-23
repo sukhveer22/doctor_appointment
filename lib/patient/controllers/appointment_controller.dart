@@ -1,12 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:doctor_appointment/models/appointent_model.dart';
+import 'package:doctor_appointment/models/chat_model.dart';
 import 'package:doctor_appointment/models/doctor_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:uuid/uuid.dart';
 
 class AppointmentController extends GetxController {
-  var selectedDate = DateTime.now().obs;
+  var selectedDate = "".obs;
+  var selectedTime = ''.obs;
   var doctors = "".obs;
   var activeDoctors = "".obs;
   var nameDoctors = "".obs;
@@ -17,52 +20,31 @@ class AppointmentController extends GetxController {
   var isLoading = true.obs;
   var hasError = false.obs;
   var errorMessage = ''.obs;
+  User? firebaseuid = FirebaseAuth.instance.currentUser;
 
-   @override
+  @override
   void onInit() {
     super.onInit();
-    fetchDoctorData(); // Pass the doctorId here
   }
 
-  void fetchDoctorData({String? doctorId}) async {
-    try {
-      var doc = await FirebaseFirestore.instance
-          .collection('Users')
-          .doc(doctorId)
-          .get();
-      if (doc.exists) {
-        doctorData.value = doc.data()!;
-        hasError.value = false;
-      } else {
-        hasError.value = true;
-        errorMessage.value = "Doctor not found";
-      }
-    } catch (e) {
-      hasError.value = true;
-      errorMessage.value = "Error fetching doctor data: $e";
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  void setSelectedDate(DateTime date) {
+  void setSelectedDate(String date) {
     selectedDate.value = date;
   }
 
-  // final User? firebaseuser =FirebaseAuth.instance.
-  void updateDate(DateTime date) {
-    selectedDate.value = date;
+  void setSelectedTime(String time) {
+    selectedTime.value = time;
   }
 
-  String generatedoctorId() {
+  String generateDoctorId() {
     return FirebaseFirestore.instance.collection('appointments').doc().id;
   }
 
-  Future<void> saveAppointmentToFirestore(AppointmentModel appointment) async {
+
+  Future<void> saveAppointmentToFirestore(
+      AppointmentModel appointment, String doctoruid) async {
     try {
-      final appointmentRef = FirebaseFirestore.instance
-          .collection('appointments')
-          .doc(appointment.doctorName);
+      final appointmentRef =
+          FirebaseFirestore.instance.collection('appointments').doc(doctoruid);
       await appointmentRef.set(appointment.toMap());
 
       Get.snackbar('Success', 'Appointment booked successfully!',
@@ -75,6 +57,34 @@ class AppointmentController extends GetxController {
           backgroundColor: Colors.red,
           snackPosition: SnackPosition.BOTTOM);
     }
+  }
+
+  Future<void> saveAppointment(
+      {required String selectedDate,
+      required String selectedTime,
+      required String doctorImage,
+      required String doctoruid}) async {
+    if (selectedTime.isEmpty) {
+      Get.snackbar('Error', 'Please select a time.',
+          colorText: Colors.white,
+          backgroundColor: Colors.red,
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
+    AppointmentModel appointment = AppointmentModel(
+      appointmentId: firebaseuid?.uid.toString(),
+      doctorImage: doctorImage,
+      userImage: firebaseuid?.photoURL.toString(),
+      userName: firebaseuid?.displayName.toString(),
+      doctorName: doctorData['name'] ?? '',
+      appointmentDate: selectedDate.toString(),
+      appointmentTime: selectedTime,
+      doctorId: doctoruid,
+      // Add other fields as needed
+    );
+
+    await saveAppointmentToFirestore(appointment, doctoruid);
   }
 
   Future<bool> isDateAvailable(DateTime selectedDate) async {
@@ -133,7 +143,6 @@ class AppointmentController extends GetxController {
         numberDoctors.value = data['phoneNumber'] as String;
         idDoctors.value = data['id'] as String;
 
-        // Assuming Doctors has a fromMap method
         doctors.value = Doctors.fromDocumentSnapshot(snapshot) as String;
       } else {
         print('No data found for doctor with uid: $uid');

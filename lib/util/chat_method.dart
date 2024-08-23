@@ -9,7 +9,7 @@ class ChatBubble extends StatelessWidget {
   const ChatBubble({
     Key? key,
     required this.message,
-    this.isFromTargetUser = false,
+    required this.isFromTargetUser,
     required this.onImageTap,
   }) : super(key: key);
 
@@ -52,7 +52,7 @@ class ChatBubble extends StatelessWidget {
             padding: EdgeInsets.all(8.0),
             margin: EdgeInsets.symmetric(vertical: 10).copyWith(right: 15),
             decoration: BoxDecoration(
-              color: isFromTargetUser ? Colors.grey[200] : Colors.white, // Replace with AppColors if needed
+              color: isFromTargetUser ? Colors.grey[200] : Colors.white,
               borderRadius: BorderRadius.only(
                 topRight: isFromTargetUser ? Radius.circular(20.0) : Radius.zero,
                 topLeft: isFromTargetUser ? Radius.zero : Radius.circular(20.0),

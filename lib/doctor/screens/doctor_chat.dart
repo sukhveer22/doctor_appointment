@@ -65,10 +65,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
 
   Future<void> _updateUserStatus(String userId) async {
     try {
-      await _firestore
-          .collection('Users')
-          .doc(userId)
-          .update({"seen": false});
+      await _firestore.collection('Users').doc(userId).update({"seen": false});
     } catch (e) {
       print('Failed to update user status: $e');
       Get.snackbar(
@@ -86,10 +83,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
         title: Text('Active Users', style: titleStyle),
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: _firestore
-            .collection('Users')
-            .where('active', isEqualTo: true)
-            .snapshots(),
+        stream: _firestore.collection('Users').snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
@@ -105,8 +99,8 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
             itemBuilder: (context, index) {
               var userDoc = snapshot.data!.docs[index];
               var userData = userDoc.data() as Map<String, dynamic>;
-              var userId = userDoc.id;
-
+              var userId = userDoc.id.toString();
+              // print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${userId}");
               return ListTile(
                 leading: CircleAvatar(
                   backgroundColor: Colors.grey[300],
@@ -121,24 +115,24 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                     Text(userData['name'] ?? 'No Name', style: titleStyle),
                     userData['seen'] == true
                         ? Container(
-                      width: 15,
-                      height: 15,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.green,
-                      ),
-                    )
+                            width: 15,
+                            height: 15,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.green,
+                            ),
+                          )
                         : Container(),
                   ],
                 ),
                 onTap: () async {
                   final chatroomModel = await getChatRoomModel(userId);
-
+                  print(">>>>>>>>>>>>>>>>>>>>${userId[index]}");
                   if (chatroomModel != null) {
                     Get.to(() => ChatRoomPage(
-                      targetUserId: userId,
-                      chatroom: chatroomModel,
-                    ));
+                          targetUserId: userId[index],
+                          chatroom: chatroomModel,
+                        ));
                     await _updateUserStatus(userId);
                   } else {
                     Get.snackbar(

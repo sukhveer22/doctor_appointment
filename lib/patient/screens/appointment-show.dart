@@ -1,11 +1,53 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:doctor_appointment/patient/controllers/chat_list_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:doctor_appointment/models/appointent_model.dart';
 import 'package:intl/intl.dart'; // For date formatting
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
+class ChatListScreen extends StatelessWidget {
+  final ChatListController controller = Get.put(ChatListController());
+
+   ChatListScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Chat List'),
+      ),
+      body: Obx(() {
+        if (controller.usersList.isEmpty && controller.doctorsList.isEmpty) {
+          return Center(child: CircularProgressIndicator());
+        }
+
+        return ListView(
+          children: [
+            Text('Chat Users', style: Theme.of(context).textTheme.bodySmall),
+            ...controller.usersList.map((chatRoom) {
+              return ListTile(
+                title: Text(chatRoom.chatroomid??""),
+                // Add more details about chatRoom as needed
+              );
+            }).toList(),
+            Text('Chat Doctors', style: Theme.of(context).textTheme.bodyLarge),
+            ...controller.doctorsList.map((chatRoom) {
+              return ListTile(
+                title: Text(chatRoom.chatroomid??""),
+                // Add more details about chatRoom as needed
+              );
+            }).toList(),
+          ],
+        );
+      }),
+    );
+  }
+}
 class AppointmentListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    // return ChatListScreen();
     return Scaffold(
       appBar: AppBar(
         title: Text('Appointments'),
@@ -37,14 +79,14 @@ class AppointmentListScreen extends StatelessWidget {
               final appointment = appointments[index];
               return ListTile(
                 leading: CircleAvatar(
-                  backgroundImage: appointment.doctorImage.toString().isNotEmpty
-                      ? AssetImage(appointment.doctorImage.toString())
-                      : NetworkImage(
+                  child: appointment.doctorImage.toString().isNotEmpty
+                      ? Image.asset(appointment.doctorImage.toString())
+                      : Image.network(
                           'https://via.placeholder.com/150'), // Placeholder if image URL is empty
                 ),
                 title: Text(appointment.doctorName.toString()),
                 subtitle: Text(
-                  'Appointment with ${appointment.userName} on ${DateFormat.yMMMd().format(appointment.appointmentDate as DateTime)}',
+                  'Appointment with ${appointment.userName} on ${DateFormat.yMMMd().format(((DateTime.tryParse(appointment.appointmentDate ??"")??DateTime.now())))}',
                 ),
               );
             },

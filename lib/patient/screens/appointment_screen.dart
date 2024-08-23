@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:doctor_appointment/models/chat_model.dart';
+import 'package:doctor_appointment/patient/controllers/chat-room_controller.dart';
 import 'package:doctor_appointment/patient/screens/chat_screen.dart';
 import 'package:doctor_appointment/util/custom_button.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -46,7 +47,7 @@ class AppointmentScreen extends StatelessWidget {
 
       if (chatroomSnapshot.docs.isNotEmpty) {
         return ChatRoomModel.fromMap(
-            chatroomSnapshot.docs.first.data() as Map<String, dynamic>);
+            chatroomSnapshot.docs.first.data());
       }
 
       final newChatRoom = ChatRoomModel(
@@ -96,119 +97,28 @@ class AppointmentScreen extends StatelessWidget {
               var doctorData = snapshot.data!.data() as Map<String, dynamic>;
               String profilePictureUrl = doctorData["profilePictureUrl"] ?? '';
               String name = doctorData["name"] ?? 'No Name';
-              String startDateStr = doctorData["startDate"]
-                      .toString()
-                      .replaceRange(0, 3, "")
-                      .replaceRange(2, 7, "") ??
-                  '';
-              String endDateStr = doctorData["endDate"]
-                      .toString()
-                      .replaceRange(0, 3, "")
-                      .replaceRange(2, 7, "") ??
-                  '';
+              String startDateStr = doctorData["startDate"] ?? '';
+              String endDateStr = doctorData["endDate"] ?? '';
 
               String specialty = doctorData["specialty"] ?? 'No specialty';
               String categoryId = doctorData["categoryId"]
-                      ?.toString()
-                      .replaceAll("Category.", "") ??
+                  ?.toString()
+                  .replaceAll("Category.", "") ??
                   'No Category';
-              int ssdate = int.parse(startDateStr);
-              int enddate = int.parse(endDateStr);
-              int dates = 0;
-              if (ssdate == enddate) {
-                dates = 1;
-              } else {
-                for (int a = ssdate; a < enddate; a++) {
-                  dates = dates + 1;
-                }
-              }
-              print(dates);
               DateTime startDate;
               DateTime endDate;
-              String startTimeStr = doctorData["startTime"] ?? '';
-              String endTimeStr = doctorData["endTime"] ?? '';
-
-              List<int> sttimea = [];
-              List<int> entimea = [];
-
-              if (startTimeStr == endTimeStr) {
-                String chp = startTimeStr[5];
-                String chpm = startTimeStr[6];
-                String cha = startTimeStr[5];
-                String cham = startTimeStr[6];
-
-                if (chp + chpm != cha + cham) {
-                  for (int a = 1; a <= 12; a++) {
-                    sttimea.add(a);
-                    entimea.add(a);
-                  }
-                } else {
-                  sttimea = [1];
-                  entimea = [1];
-                }
-              } else if (startTimeStr.length == 7 && endTimeStr.length == 7) {
-                int sttime = int.parse(startTimeStr.replaceRange(1, 7, ""));
-                int entime = int.parse(endTimeStr.replaceRange(1, 7, ""));
-
-                for (int a = sttime; a <= 12; a++) {
-                  sttimea.add(a);
-                }
-                for (int a = entime; a <= 12; a++) {
-                  entimea.add(a);
-                }
-
-                print(sttimea);
-                print(entimea);
-              } else if (startTimeStr.length == 8 && endTimeStr.length == 8) {
-                int sttime = int.parse(startTimeStr.replaceRange(2, 8, ""));
-                int entime = int.parse(endTimeStr.replaceRange(2, 8, ""));
-
-                for (int a = sttime; a <= 12; a++) {
-                  sttimea.add(a);
-                }
-                for (int a = entime; a <= 12; a++) {
-                  entimea.add(a);
-                }
-
-                print(sttimea);
-                print(entimea);
-              } else if (startTimeStr.length == 7 && endTimeStr.length == 8) {
-                int sttime = int.parse(startTimeStr.replaceRange(1, 7, ""));
-                int entime = int.parse(endTimeStr.replaceRange(2, 8, ""));
-
-                for (int a = sttime; a <= 12; a++) {
-                  sttimea.add(a);
-                }
-                for (int a = entime; a <= 12; a++) {
-                  entimea.add(a);
-                }
-
-                print(sttimea);
-                print(entimea);
-              } else if (startTimeStr.length == 8 && endTimeStr.length == 7) {
-                int sttime = int.parse(startTimeStr.replaceRange(2, 8, ""));
-                int entime = int.parse(endTimeStr.replaceRange(1, 7, ""));
-
-                for (int a = sttime; a <= 12; a++) {
-                  sttimea.add(a);
-                }
-                for (int a = entime; a <= 12; a++) {
-                  entimea.add(a);
-                }
-
-                print(sttimea);
-                print(entimea);
-              } else {
-                print(">>>>>>>>>>>>>>Error");
-              }
 
               try {
-                startDate = DateTime.parse(ssdate.toString());
-                endDate = DateTime.parse(enddate.toString());
+                startDate = DateTime.parse(startDateStr);
+                endDate = DateTime.parse(endDateStr);
               } catch (e) {
                 startDate = DateTime.now();
-                endDate = startDate.add(Duration(days: dates));
+                endDate = startDate.add(Duration(days: 30)); // Default to 30 days if parse fails
               }
+
+              int totalDays = endDate.difference(startDate).inDays + 1;
+
+              List<int> timeSlots = List.generate(12, (index) => index + 1);
 
               return Container(
                 height: AppConfig.screenHeight,
@@ -308,18 +218,18 @@ class AppointmentScreen extends StatelessWidget {
                                   child: ListView.builder(
                                     shrinkWrap: true,
                                     scrollDirection: Axis.horizontal,
-                                    itemCount: dates,
+                                    itemCount: totalDays,
                                     itemBuilder: (context, index) {
                                       DateTime date =
-                                          startDate.add(Duration(days: index));
+                                      startDate.add(Duration(days: index));
                                       return Center(
                                         child: DateCapsule(
                                           date: date,
                                           isSelected: true,
-                                          dates: ssdate + index,
+                                          dates: startDate.day + index,
                                           onTap: () {
                                             selectedDates =
-                                                "${EasyDateFormatter.shortMonthName(date, "en_US")} ${ssdate + index} ${EasyDateFormatter.shortDayName(date, "en_US")}";
+                                            "${EasyDateFormatter.shortMonthName(date, "en_US")} ${startDate.day + index} ${EasyDateFormatter.shortDayName(date, "en_US")}";
                                           },
                                         ),
                                       ).paddingSymmetric(horizontal: 10);
@@ -341,13 +251,14 @@ class AppointmentScreen extends StatelessWidget {
                                   child: ListView.builder(
                                     scrollDirection: Axis.horizontal,
                                     shrinkWrap: true,
-                                    itemCount: sttimea.length,
+                                    itemCount: timeSlots.length,
                                     itemBuilder: (context, index) {
                                       return TimeCapsule(
-                                        time: sttimea[index],
-                                        isSelected: true,
+                                        time: timeSlots[index],
+                                        isSelected: selectedTimes.endsWith('AM') &&
+                                            timeSlots[index] == int.parse(selectedTimes.split('AM').first),
                                         onTap: () {
-                                          selectedTimes = "${sttimea[index]}AM";
+                                          selectedTimes = "${timeSlots[index]}AM";
                                         },
                                         text: 'AM',
                                       ).paddingSymmetric(horizontal: 10);
@@ -365,13 +276,14 @@ class AppointmentScreen extends StatelessWidget {
                                   child: ListView.builder(
                                     scrollDirection: Axis.horizontal,
                                     shrinkWrap: true,
-                                    itemCount: entimea.length,
+                                    itemCount: timeSlots.length,
                                     itemBuilder: (context, index) {
                                       return TimeCapsule(
-                                        time: entimea[index],
-                                        isSelected: true,
+                                        time: timeSlots[index],
+                                        isSelected: selectedTimes.endsWith('PM') &&
+                                            timeSlots[index] == int.parse(selectedTimes.split('PM').first),
                                         onTap: () {
-                                          selectedTimes = "${entimea[index]}PM";
+                                          selectedTimes = "${timeSlots[index]}PM";
                                         },
                                         text: 'PM',
                                       ).paddingSymmetric(horizontal: 10);
@@ -382,15 +294,14 @@ class AppointmentScreen extends StatelessWidget {
                               SizedBox(height: 20),
                               Row(
                                 mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                                MainAxisAlignment.spaceBetween,
                                 children: [
                                   CustomButton(
                                     width: 150.w,
                                     fontSize: 12.sp,
                                     text: "Send message",
-                                    onPressed: ()  async {
+                                    onPressed: () async {
                                       final chatroomModel = await getChatRoomModel(doctorId);
-
                                       if (chatroomModel != null) {
                                         Get.to(() => ChatRoomPage(
                                           targetUserId: doctorId,
@@ -424,7 +335,7 @@ class AppointmentScreen extends StatelessWidget {
                                             colorText: Colors.white,
                                             backgroundColor: Colors.red,
                                             snackPosition:
-                                                SnackPosition.BOTTOM);
+                                            SnackPosition.BOTTOM);
                                       }
                                     },
                                   ),

@@ -39,7 +39,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
 
       if (chatroomSnapshot.docs.isNotEmpty) {
         return ChatRoomModel.fromMap(
-            chatroomSnapshot.docs.first.data() as Map<String, dynamic>);
+            chatroomSnapshot.docs.first.data());
       }
 
       final newChatRoom = ChatRoomModel(
@@ -65,10 +65,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
 
   Future<void> _updateUserStatus(String userId) async {
     try {
-      await _firestore
-          .collection('Users')
-          .doc(userId)
-          .update({"seen": false});
+      await _firestore.collection('Users').doc(userId).update({"seen": false});
     } catch (e) {
       print('Failed to update user status: $e');
       Get.snackbar(
@@ -86,10 +83,7 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
         title: Text('Active Users', style: titleStyle),
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: _firestore
-            .collection('Users')
-            .where('active', isEqualTo: true)
-            .snapshots(),
+        stream: _firestore.collection('Users').snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
@@ -106,7 +100,6 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
               var userDoc = snapshot.data!.docs[index];
               var userData = userDoc.data() as Map<String, dynamic>;
               var userId = userDoc.id;
-
               return ListTile(
                 leading: CircleAvatar(
                   backgroundColor: Colors.grey[300],
@@ -133,7 +126,6 @@ class _ActiveUsersScreenState extends State<ActiveUsersScreen> {
                 ),
                 onTap: () async {
                   final chatroomModel = await getChatRoomModel(userId);
-
                   if (chatroomModel != null) {
                     Get.to(() => ChatRoomPage(
                       targetUserId: userId,

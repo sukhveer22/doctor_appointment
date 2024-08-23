@@ -213,7 +213,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                         final message = _controller.messages[index].data()
                             as Map<String, dynamic>;
                         bool isFromTargetUser = message['sender'] ==
-                            _controller.targetUserName.value;
+                            _controller.targetUserId;
                         return ChatBubble(
                           isFromTargetUser: isFromTargetUser,
                           message: message,

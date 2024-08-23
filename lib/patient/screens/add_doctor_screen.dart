@@ -72,9 +72,9 @@ class _AddDoctorScreenState extends State<AddDoctorScreen> {
                       child: CircleAvatar(
                         backgroundColor: AppColors.primaryColor,
                         radius: 65.r,
-                        backgroundImage: imageFile != null
-                            ? FileImage(File(imageFile.path))
-                            : const AssetImage(
+                        child: imageFile != null
+                            ? Image.file(File(imageFile.path))
+                            : Image.asset(
                                 "assets/home_screen_image/doctor-images/doctor5.png",
                               ),
                       ),

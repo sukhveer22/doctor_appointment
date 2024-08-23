@@ -160,8 +160,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
-            controller.searchText.text == ""
-                ? Column(
+            if (controller.searchText.text == "")
+              Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
@@ -221,9 +221,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         height: 20,
                       ),
                       SizedBox(
-                        height: 220.h,
                         child: ListView.builder(
                           shrinkWrap: true,
+                          physics: NeverScrollableScrollPhysics(),
                           itemCount: controller.activeDoctors.length,
                           itemBuilder: (context, index) => DoctorCard(
                               doctor: controller.numberDoctors[index],
@@ -235,23 +235,21 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ],
                   ).paddingSymmetric(horizontal: 10)
-                : controller.filteredDoctors.isEmpty
-                    ? Center(child: Text("No doctors available."))
-                    : Column(
-                        children: [
-                          ListView.builder(
-                            shrinkWrap: true,
-                            itemCount: controller.sactiveDoctors.length,
-                            itemBuilder: (context, index) => DoctorCard(
-                                doctor: controller.snumberDoctors[index],
-                                doctorTap: controller.stapDoctors[index],
-                                doctorName: controller.snameDoctors[index],
-                                doctorImageUrl:
-                                    controller.sactiveDoctors[index],
-                                rating: 5.0, doctorId:    controller.sIdDoctors[index],),
-                          ),
-                        ],
-                      ),
+            else if(controller.sactiveDoctors.isNotEmpty)
+              for(int index =0;index<controller.sactiveDoctors.length;index++)
+                     ListView.builder(
+                      shrinkWrap: false,
+                      physics: NeverScrollableScrollPhysics(),
+                      itemCount: controller.sactiveDoctors.length,
+                      itemBuilder: (context, index) => DoctorCard(
+                          doctor: controller.snumberDoctors[index],
+                          doctorTap: controller.stapDoctors[index],
+                          doctorName: controller.snameDoctors[index],
+                          doctorImageUrl:
+                              controller.sactiveDoctors[index],
+                          rating: 5.0, doctorId:    controller.sIdDoctors[index],),
+                    )
+            else Center(child: Text("No doctors available.")),
           ],
         )),
       ),

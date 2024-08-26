@@ -22,7 +22,12 @@ void main() async {
   runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
   final SelectRoleController userrole = Get.put(SelectRoleController());
 
   @override
@@ -48,18 +53,22 @@ class MyApp extends StatelessWidget {
 
     if (user != null) {
       return StreamBuilder<DocumentSnapshot>(
-        stream: FirebaseFirestore.instance.collection('Users').doc(user.uid.toString()).snapshots(),
+        stream: FirebaseFirestore.instance
+            .collection('Users')
+            .doc(user.uid.toString())
+            .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator()); // Show loading indicator
+            return Center(
+                child: CircularProgressIndicator()); // Show loading indicator
           } else if (snapshot.hasError) {
             return Center(child: Text('Error loading data'));
           } else if (!snapshot.hasData || !snapshot.data!.exists) {
-            return SelectRoleScreen() ;
+            return SelectRoleScreen();
           } else {
             var userData = snapshot.data!.data() as Map<String, dynamic>;
             String role = userData['role'];
-
+            userrole.setActiveStatus(true);
             if (role.toString() == 'Doctor') {
               return Doctordashborad();
             } else {

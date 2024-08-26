@@ -1,4 +1,5 @@
 import 'package:doctor_appointment/patient/controllers/pt_home_screen_controller.dart';
+import 'package:doctor_appointment/role_method/select_role_controller.dart';
 import 'package:doctor_appointment/util/appTextStyle.dart';
 import 'package:doctor_appointment/util/app_color.dart';
 import 'package:doctor_appointment/util/custom_text_field.dart';
@@ -22,12 +23,20 @@ class _HomeScreenState extends State<HomeScreen> {
   final HomeController controller = Get.put(HomeController());
 
   final User? currentUser = FirebaseAuth.instance.currentUser;
+  final SelectRoleController userrole = Get.put(SelectRoleController());
 
   @override
   void initState() {
     controller.fetchActiveDoctors();
     controller.updateSearchText("");
+    userrole.setActiveStatus(true);
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    userrole.setActiveStatus(false);
+    super.dispose();
   }
 
   @override
@@ -103,10 +112,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                   currentUser?.photoURL?.toString() ??
                                       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQanlasPgQjfGGU6anray6qKVVH-ZlTqmuTHw&s",
                                   fit: BoxFit.cover,
-                                  // Ensures the image covers the entire area
                                   errorBuilder: (context, error, stackTrace) {
-                                    return Icon(Icons
-                                        .error); // Shows an error icon if the image fails to load
+                                    return Icon(
+                                      Icons.error,
+                                    ); // Shows an error icon if the image fails to load
                                   },
                                 ),
                               ),
@@ -162,94 +171,99 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             if (controller.searchText.text == "")
               Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Active Doctors",
-                        style: AppTextStyles.header,
-                      ),
-                      SizedBox(height: 20),
-                      Obx(() => SizedBox(
-                            height: 180,
-                            child: ListView.builder(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: controller.activeDoctors.length,
-                              itemBuilder: (context, index) {
-                                return ActiveImageContainer(
-                                  imageUrl: controller.activeDoctors[index],
-                                );
-                              },
-                            ),
-                          )),
-                      SizedBox(height: 20),
-                      Obx(
-                        () => SizedBox(
-                          height: 100,
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: controller.imageList.length,
-                            itemBuilder: (context, index) {
-                              return Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: GestureDetector(
-                                  onTap: () =>
-                                      Get.to(controller.screens[index]),
-                                  child: Container(
-                                    width: 80,
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(colors: [
-                                        Colors.deepPurpleAccent.shade400,
-                                        Colors.deepPurpleAccent.shade100,
-                                      ]),
-                                      borderRadius: BorderRadius.all(
-                                        Radius.circular(10),
-                                      ),
-                                    ),
-                                    child: Center(
-                                      child: Image(
-                                          image: AssetImage(
-                                              controller.imageList[index])),
-                                    ),
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Active Doctors",
+                    style: AppTextStyles.header,
+                  ),
+                  SizedBox(height: 20),
+                  Obx(() => SizedBox(
+                        height: 180,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: controller.activeDoctors.length,
+                          itemBuilder: (context, index) {
+                            return ActiveImageContainer(
+                              imageUrl: controller.activeDoctors[index],
+                            );
+                          },
+                        ),
+                      )),
+                  SizedBox(height: 20),
+                  Obx(
+                    () => SizedBox(
+                      height: 100,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: controller.imageList.length,
+                        itemBuilder: (context, index) {
+                          return Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: GestureDetector(
+                              onTap: () => Get.to(controller.screens[index]),
+                              child: Container(
+                                width: 80,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(colors: [
+                                    Colors.deepPurpleAccent.shade400,
+                                    Colors.deepPurpleAccent.shade100,
+                                  ]),
+                                  borderRadius: BorderRadius.all(
+                                    Radius.circular(10),
                                   ),
                                 ),
-                              );
-                            },
-                          ),
-                        ),
+                                child: Center(
+                                  child: Image(
+                                      image: AssetImage(
+                                          controller.imageList[index])),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                      SizedBox(
-                        height: 20,
-                      ),
-                      SizedBox(
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          physics: NeverScrollableScrollPhysics(),
-                          itemCount: controller.activeDoctors.length,
-                          itemBuilder: (context, index) => DoctorCard(
-                              doctor: controller.numberDoctors[index],
-                              doctorTap: controller.tapDoctors[index],
-                              doctorName: controller.nameDoctors[index],
-                              doctorImageUrl: controller.activeDoctors[index],
-                              rating: 5.0, doctorId: controller.idDoctors[index],),
-                        ),
-                      ),
-                    ],
-                  ).paddingSymmetric(horizontal: 10)
-            else if(controller.sactiveDoctors.isNotEmpty)
-              for(int index =0;index<controller.sactiveDoctors.length;index++)
-                     ListView.builder(
-                      shrinkWrap: false,
+                    ),
+                  ),
+                  SizedBox(
+                    height: 20,
+                  ),
+                  SizedBox(
+                    child: ListView.builder(
+                      shrinkWrap: true,
                       physics: NeverScrollableScrollPhysics(),
-                      itemCount: controller.sactiveDoctors.length,
+                      itemCount: controller.activeDoctors.length,
                       itemBuilder: (context, index) => DoctorCard(
-                          doctor: controller.snumberDoctors[index],
-                          doctorTap: controller.stapDoctors[index],
-                          doctorName: controller.snameDoctors[index],
-                          doctorImageUrl:
-                              controller.sactiveDoctors[index],
-                          rating: 5.0, doctorId:    controller.sIdDoctors[index],),
-                    )
-            else Center(child: Text("No doctors available.")),
+                        doctor: controller.numberDoctors[index],
+                        doctorTap: controller.tapDoctors[index],
+                        doctorName: controller.nameDoctors[index],
+                        doctorImageUrl: controller.activeDoctors[index],
+                        rating: 5.0,
+                        doctorId: controller.idDoctors[index],
+                      ),
+                    ),
+                  ),
+                ],
+              ).paddingSymmetric(horizontal: 10)
+            else if (controller.sactiveDoctors.isNotEmpty)
+              for (int index = 0;
+                  index < controller.sactiveDoctors.length;
+                  index++)
+                ListView.builder(
+                  shrinkWrap: false,
+                  physics: NeverScrollableScrollPhysics(),
+                  itemCount: controller.sactiveDoctors.length,
+                  itemBuilder: (context, index) => DoctorCard(
+                    doctor: controller.snumberDoctors[index],
+                    doctorTap: controller.stapDoctors[index],
+                    doctorName: controller.snameDoctors[index],
+                    doctorImageUrl: controller.sactiveDoctors[index],
+                    rating: 5.0,
+                    doctorId: controller.sIdDoctors[index],
+                  ),
+                )
+            else
+              Center(child: Text("No doctors available.")),
           ],
         )),
       ),

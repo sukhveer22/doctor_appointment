@@ -49,9 +49,12 @@ class HomeController extends GetxController {
       activeDoctors.value =
           docs.map((doc) => doc['profilePictureUrl'] as String).toList();
       nameDoctors.value = docs.map((doc) => doc['name'] as String).toList();
-      tapDoctors.value = docs.map((doc) => doc['categoryId'] as String).toList();
-      numberDoctors.value = docs.map((doc) => doc['phoneNumber'] as String).toList();
-      filteredDoctors.value = List.from(activeDoctors); // Initialize filteredDoctors
+      tapDoctors.value =
+          docs.map((doc) => doc['categoryId'] as String).toList();
+      numberDoctors.value =
+          docs.map((doc) => doc['phoneNumber'] as String).toList();
+      filteredDoctors.value =
+          List.from(activeDoctors); // Initialize filteredDoctors
       idDoctors.value = docs.map((doc) => doc.id).toList();
     } catch (e) {
       print('Error fetching doctors: $e');
@@ -62,7 +65,8 @@ class HomeController extends GetxController {
     searchText.text = text;
     try {
       if (text.isEmpty) {
-        filteredDoctors.value = List.from(activeDoctors); // Show all doctors if search is empty
+        filteredDoctors.value =
+            List.from(activeDoctors); // Show all doctors if search is empty
       } else {
         var snapshot = await FirebaseFirestore.instance
             .collection('Users')
@@ -72,12 +76,16 @@ class HomeController extends GetxController {
             .get();
         var docs = snapshot.docs;
 
-        sactiveDoctors.value = docs.map((doc) => doc['profilePictureUrl'] as String).toList();
+        sactiveDoctors.value =
+            docs.map((doc) => doc['profilePictureUrl'] as String).toList();
         snameDoctors.value = docs.map((doc) => doc['name'] as String).toList();
-        stapDoctors.value = docs.map((doc) => doc['categoryId'] as String).toList();
-        snumberDoctors.value = docs.map((doc) => doc['phoneNumber'] as String).toList();
+        stapDoctors.value =
+            docs.map((doc) => doc['categoryId'] as String).toList();
+        snumberDoctors.value =
+            docs.map((doc) => doc['phoneNumber'] as String).toList();
         sIdDoctors.value = docs.map((doc) => doc.id).toList();
-        filteredDoctors.value = List.from(sactiveDoctors); // Update filteredDoctors based on search
+        filteredDoctors.value =
+            List.from(sactiveDoctors); // Update filteredDoctors based on search
       }
     } catch (e, s) {
       print('Error updating search text: $e');

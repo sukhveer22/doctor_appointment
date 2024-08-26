@@ -47,52 +47,52 @@ class ChatListScreen extends StatelessWidget {
 class AppointmentListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    // return ChatListScreen();
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Appointments'),
-      ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream:
-            FirebaseFirestore.instance.collection('appointments').snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          }
-
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
-
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return Center(child: Text('No appointments found.'));
-          }
-
-          final appointments = snapshot.data!.docs
-              .map((doc) =>
-                  AppointmentModel.fromMap(doc.data() as Map<String, dynamic>))
-              .toList();
-
-          return ListView.builder(
-            itemCount: appointments.length,
-            itemBuilder: (context, index) {
-              final appointment = appointments[index];
-              return ListTile(
-                leading: CircleAvatar(
-                  child: appointment.doctorImage.toString().isNotEmpty
-                      ? Image.asset(appointment.doctorImage.toString())
-                      : Image.network(
-                          'https://via.placeholder.com/150'), // Placeholder if image URL is empty
-                ),
-                title: Text(appointment.doctorName.toString()),
-                subtitle: Text(
-                  'Appointment with ${appointment.userName} on ${DateFormat.yMMMd().format(((DateTime.tryParse(appointment.appointmentDate ??"")??DateTime.now())))}',
-                ),
-              );
-            },
-          );
-        },
-      ),
-    );
+    return ChatListScreen();
+    // return Scaffold(
+    //   appBar: AppBar(
+    //     title: Text('Appointments'),
+    //   ),
+    //   body: StreamBuilder<QuerySnapshot>(
+    //     stream:
+    //         FirebaseFirestore.instance.collection('appointments').snapshots(),
+    //     builder: (context, snapshot) {
+    //       if (snapshot.connectionState == ConnectionState.waiting) {
+    //         return Center(child: CircularProgressIndicator());
+    //       }
+    //
+    //       if (snapshot.hasError) {
+    //         return Center(child: Text('Error: ${snapshot.error}'));
+    //       }
+    //
+    //       if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+    //         return Center(child: Text('No appointments found.'));
+    //       }
+    //
+    //       final appointments = snapshot.data!.docs
+    //           .map((doc) =>
+    //               AppointmentModel.fromMap(doc.data() as Map<String, dynamic>))
+    //           .toList();
+    //
+    //       return ListView.builder(
+    //         itemCount: appointments.length,
+    //         itemBuilder: (context, index) {
+    //           final appointment = appointments[index];
+    //           return ListTile(
+    //             leading: CircleAvatar(
+    //               child: appointment.doctorImage.toString().isNotEmpty
+    //                   ? Image.asset(appointment.doctorImage.toString())
+    //                   : Image.network(
+    //                       'https://via.placeholder.com/150'), // Placeholder if image URL is empty
+    //             ),
+    //             title: Text(appointment.doctorName.toString()),
+    //             subtitle: Text(
+    //               'Appointment with ${appointment.userName} on ${DateFormat.yMMMd().format(((DateTime.tryParse(appointment.appointmentDate ??"")??DateTime.now())))}',
+    //             ),
+    //           );
+    //         },
+    //       );
+    //     },
+    //   ),
+    // );
   }
 }

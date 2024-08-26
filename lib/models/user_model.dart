@@ -4,17 +4,17 @@ class UserModel {
   String? id;
   String? name;
   String? email;
-  String? profilePicture;
+  String? profilePictureUrl;
   String? role;
 
-  UserModel({this.id, this.name, this.email, this.profilePicture, this.role});
+  UserModel({this.id, this.name, this.email, this.profilePictureUrl, this.role});
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
       'name': name,
       'email': email,
-      'profilePicture': profilePicture,
+      'profilePictureUrl': profilePictureUrl,
       'role': role,
     };
   }
@@ -23,7 +23,7 @@ class UserModel {
       : id = json["id"],
         name = json["name"],
         email = json["email"],
-        profilePicture = json['profilePicture'],
+        profilePictureUrl = json['profilePictureUrl'],
         role = json['role'];
   factory UserModel.fromDocument(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
@@ -31,7 +31,7 @@ class UserModel {
       id: doc.id,
       name: data['name'],
       email: data['email'],
-      profilePicture: data['profilePicture'],
+      profilePictureUrl: data['profilePictureUrl'],
       role: data['role'],
     );
   }

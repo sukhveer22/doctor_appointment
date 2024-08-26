@@ -1,7 +1,7 @@
 import 'package:doctor_appointment/doctor/screens/profile_screens/dcotor-mian-profile.dart';
 import 'package:doctor_appointment/patient/screens/add_doctor_screen.dart';
 import 'package:doctor_appointment/patient/screens/appointment-show.dart';
-import 'package:doctor_appointment/doctor/screens/doctor_chat.dart';
+import 'package:doctor_appointment/util/all_chat.dart';
 import 'package:doctor_appointment/patient/screens/appointment_screen.dart';
 import 'package:doctor_appointment/util/app_color.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -14,9 +14,9 @@ import '../../models/chat_model.dart';
 import '../../util/doctor_util.dart';
 import '../screens/home_screen.dart';
 
-enum _SelectedTab { Home, Doctor, Appointment,Profile }
+enum _SelectedTab { Home, Chat, Appointment, Profile }
 
-class NavigationController extends GetxController {
+class PatientNavigationController extends GetxController {
   final PageController pageController = PageController();
   var selectedIndex = _SelectedTab.Home.obs;
 
@@ -40,7 +40,8 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final NavigationController controller = Get.put(NavigationController());
+    final PatientNavigationController controller =
+        Get.put(PatientNavigationController());
 
     return Scaffold(
       body: PageView(
@@ -51,7 +52,7 @@ class DashboardScreen extends StatelessWidget {
         },
         children: [
           HomeScreen(),
-          AppointmentScreen(doctorId: "mpixsswLimYMyLFVXCpcUxymjlj2"),
+          AllChatScreen(),
           AppointmentListScreen(),
           AllProfile()
         ],
@@ -74,11 +75,11 @@ class DashboardScreen extends StatelessWidget {
               title: 'Home',
             ),
             BarItem(
-              icon: CupertinoIcons.add_circled_solid,
-              title: 'Doctor',
+              icon: CupertinoIcons.chat_bubble_fill,
+              title: 'Chat',
             ),
             BarItem(
-              icon: Icons.library_books_outlined,
+              icon: Icons.book,
               title: "Appointment",
             ),
             BarItem(

@@ -1,6 +1,5 @@
 import 'package:doctor_appointment/models/chat_model.dart';
 import 'package:doctor_appointment/models/user_model.dart';
-import 'package:doctor_appointment/patient/controllers/chat-controller.dart';
 import 'package:doctor_appointment/util/chat_method.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +7,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:doctor_appointment/util/app_color.dart';
 import 'package:doctor_appointment/util/custom_text_field.dart';
-
 import '../controllers/chat-room_controller.dart';
 
 class ChatRoomPage extends StatefulWidget {
@@ -33,7 +31,6 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   @override
   void initState() {
     super.initState();
-    print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${widget.targetUserId}");
     _controller = Get.put(ChatController(
       targetUserId: widget.targetUserId,
       chatroom: widget.chatroom,
@@ -90,9 +87,9 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                 child: IconButton(
                   icon: Icon(Icons.download, color: Colors.white, size: 30),
                   onPressed: () {
-                    Navigator.of(context).pop();
-                    _controller.downloadFile(
-                        imageUrl, imageUrl.split('/').last);
+                    _controller.downloadAndSaveImage(
+                      imageUrl,
+                    );
                   },
                 ),
               ),
@@ -212,8 +209,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                       itemBuilder: (context, index) {
                         final message = _controller.messages[index].data()
                             as Map<String, dynamic>;
-                        bool isFromTargetUser = message['sender'] ==
-                            _controller.targetUserId;
+                        bool isFromTargetUser =
+                            message['sender'] == _controller.targetUserId;
                         return ChatBubble(
                           isFromTargetUser: isFromTargetUser,
                           message: message,
@@ -285,9 +282,11 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                           child: Icon(Icons.send),
                         ),
                         onPressed: () async {
-                          await _controller
-                              .sendMessage(_chatController.text.toString());
-                          _chatController.clear();
+                          if (_chatController.text.trim().isNotEmpty) {
+                            await _controller
+                                .sendMessage(_chatController.text.toString());
+                            _chatController.clear();
+                          }
                         },
                       ),
                     ],

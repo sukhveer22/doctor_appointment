@@ -38,7 +38,7 @@ class SignUpController extends GetxController {
       if (imageFile.value != null) {
         final storageRef = FirebaseStorage.instance
             .ref()
-            .child('profilePicture/${userCredential.user!.uid}');
+            .child('profilePictureUrl/${userCredential.user!.uid}');
         final uploadTask = storageRef.putFile(File(imageFile.value!.path));
         final snapshot = await uploadTask.whenComplete(() {});
         profilePictureUrl = await snapshot.ref.getDownloadURL();
@@ -50,7 +50,7 @@ class SignUpController extends GetxController {
         id: userCredential.user!.uid,
         name: nameController.text.trim(),
         email: emailController.text.trim(),
-        profilePicture: profilePictureUrl.toString(),
+        profilePictureUrl: profilePictureUrl.toString(),
         role: "patient", // Sav
       );
       UserModel? users = await FirebaseHelper.getUserModelById(user.id.toString());

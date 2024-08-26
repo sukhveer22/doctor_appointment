@@ -26,7 +26,8 @@ class ChatListController extends GetxController {
       return;
     }
 
-    _firestore.collection('chatRoom')
+    _firestore
+        .collection('chatRooms')
         .where('participants.$currentUserId', isEqualTo: true)
         .snapshots()
         .listen((snapshot) {
@@ -46,13 +47,15 @@ class ChatListController extends GetxController {
       return;
     }
 
-    _firestore.collection('chatRoom')
+    _firestore
+        .collection('chatRooms')
         .where('participants.$currentUserId', isEqualTo: true)
         .snapshots()
         .listen((snapshot) {
       final doctorChatrooms = snapshot.docs.where((doc) {
         final chatRoom = ChatRoomModel.fromMap(doc.data());
-        return chatRoom.participants?.keys.any((id) => id != currentUserId)??false;
+        return chatRoom.participants?.keys.any((id) => id != currentUserId) ??
+            false;
       }).toList();
 
       doctorsList.value = doctorChatrooms.map((doc) {

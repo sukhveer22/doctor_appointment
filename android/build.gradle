@@ -1,18 +1,23 @@
-allprojects {
+buildscript {
+    ext.kotlin_version = '1.8.0' // Update this to match the required Kotlin version
     repositories {
         google()
         mavenCentral()
     }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        // Other classpath dependencies
+    }
 }
 
-rootProject.buildDir = "../build"
-subprojects {
-    project.buildDir = "${rootProject.buildDir}/${project.name}"
-}
-subprojects {
-    project.evaluationDependsOn(":app")
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android' // This applies the Kotlin plugin to your project
+
+android {
+    // Android configurations
 }
 
-tasks.register("clean", Delete) {
-    delete rootProject.buildDir
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    // Other dependencies
 }

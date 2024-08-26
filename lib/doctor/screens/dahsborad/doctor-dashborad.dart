@@ -4,7 +4,7 @@ import 'package:doctor_appointment/doctor/screens/profile_screens/dcotor-mian-pr
 import 'package:doctor_appointment/doctor/screens/profile_screens/doctorprofile_screen.dart';
 import 'package:doctor_appointment/patient/screens/add_doctor_screen.dart';
 import 'package:doctor_appointment/patient/screens/appointment-show.dart';
-import 'package:doctor_appointment/doctor/screens/doctor_chat.dart';
+import 'package:doctor_appointment/util/all_chat.dart';
 import 'package:doctor_appointment/patient/screens/home_screen.dart';
 import 'package:doctor_appointment/util/app_color.dart';
 import 'package:doctor_appointment/util/doctor_util.dart';
@@ -54,7 +54,7 @@ class Doctordashborad extends StatelessWidget {
         children: [
           // DoctorScheduleScreen(),
           const DoctorHomeScreen(),
-          ActiveUsersScreen(),
+          AllChatScreen(),
           AppointmentListScreen(),
           AllProfile(),
         ],

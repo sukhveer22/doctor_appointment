@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:doctor_appointment/models/chat_model.dart';
 import 'package:doctor_appointment/models/message_model.dart';
+import 'package:doctor_appointment/role_method/select_role_controller.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -21,13 +22,15 @@ class ChatController extends GetxController {
   final ChatRoomModel chatroom;
   User? currentUser = FirebaseAuth.instance.currentUser;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
+  final ImagePicker _picker = ImagePicker();
+
   RxList<QueryDocumentSnapshot> messages = <QueryDocumentSnapshot>[].obs;
   var isTyping = false.obs;
   var targetUserTyping = false.obs;
   RxString targetUserImage = "".obs;
   RxString targetUserName = "".obs;
-  final FirebaseStorage _storage = FirebaseStorage.instance;
-  final ImagePicker _picker = ImagePicker();
+  RxBool isSendingImage = false.obs;
 
   @override
   void onInit() {
@@ -38,48 +41,71 @@ class ChatController extends GetxController {
   }
 
   Future<void> sendImage() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+
+    if (image == null) return;
+
+    final File imageFile = File(image.path);
+    final String fileName = DateTime.now().millisecondsSinceEpoch.toString();
+    final Reference storageRef =
+        _storage.ref().child('chat_images').child(fileName);
+
     try {
-      final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-      if (pickedFile == null) {
-        Get.snackbar("Error", "No image selected", snackPosition: SnackPosition.BOTTOM);
-        return;
-      }
+      isSendingImage.value = true;
+      await storageRef.putFile(imageFile);
+      final String downloadUrl = await storageRef.getDownloadURL();
+      await _imageMessage(downloadUrl);
+    } catch (e) {
+      Get.snackbar("Error", "Failed to send image: $e",
+          snackPosition: SnackPosition.BOTTOM);
+    } finally {
+      isSendingImage.value = false;
+    }
+  }
 
-      File imageFile = File(pickedFile.path);
-      String fileName = Uuid().v1() + '.' + imageFile.path.split('.').last;
+  Future<void> downloadAndSaveImage(String url) async {
+    try {
+      final Dio dio = Dio();
+      final Directory directory = await getApplicationDocumentsDirectory();
+      final String fileName = url.split('/').last.split('?').first;
+      final String filePath = '${directory.path}/$fileName';
 
-      // Upload image to Firebase Storage
-      Reference storageRef = _storage.ref().child('chat_images').child(fileName);
-      UploadTask uploadTask = storageRef.putFile(imageFile);
-      TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() {});
-      String imageUrl = await taskSnapshot.ref.getDownloadURL();
+      await dio.download(url, filePath);
+      print('Image downloaded and saved to $filePath');
+    } catch (e) {
+      print('Error downloading and saving image: $e');
+    }
+  }
 
-      // Send image message
+  Future<void> _imageMessage(String imageUrl) async {
+    if (imageUrl.isNotEmpty) {
       MessageModel newMessage = MessageModel(
         messageid: Uuid().v1(),
-        sender: currentUser?.uid,
+        sender: currentUser?.uid ?? "",
         createdon: DateTime.now(),
-        text: '',
         imageUrl: imageUrl,
         seen: false,
       );
 
-      await _firestore
-          .collection("chatRooms")
-          .doc(chatroom.chatroomid)
-          .collection("messages")
-          .doc(newMessage.messageid)
-          .set(newMessage.toMap());
+      try {
+        await _firestore
+            .collection("chatRooms")
+            .doc(chatroom.chatroomid)
+            .collection("messages")
+            .doc(newMessage.messageid)
+            .set(newMessage.toMap());
 
-      chatroom.lastMessage = 'Image'; // Optionally update chat room's last message
-      await _firestore
-          .collection("chatRooms")
-          .doc(chatroom.chatroomid)
-          .set(chatroom.toMap());
+        chatroom.lastMessage = imageUrl;
+        await _firestore
+            .collection("chatRooms")
+            .doc(chatroom.chatroomid)
+            .set(chatroom.toMap());
 
-      Get.snackbar("Success", "Image sent successfully", snackPosition: SnackPosition.BOTTOM);
-    } catch (e) {
-      Get.snackbar("Error", "Failed to send image: $e", snackPosition: SnackPosition.BOTTOM);
+        print("Image Sent!");
+      } catch (e) {
+        Get.snackbar("Error", "Failed to send Image: $e",
+            snackPosition: SnackPosition.BOTTOM);
+      }
     }
   }
 
@@ -105,35 +131,38 @@ class ChatController extends GetxController {
             .doc(chatroom.chatroomid)
             .set(chatroom.toMap());
 
-        Get.snackbar("Success", "Chat cleared successfully", snackPosition: SnackPosition.BOTTOM);
+        Get.snackbar("Success", "Chat cleared successfully",
+            snackPosition: SnackPosition.BOTTOM);
       } else {
-        Get.snackbar("Info", "No messages to clear", snackPosition: SnackPosition.BOTTOM);
+        Get.snackbar("Info", "No messages to clear",
+            snackPosition: SnackPosition.BOTTOM);
       }
     } catch (e) {
-      Get.snackbar("Error", "Failed to clear chat: $e", snackPosition: SnackPosition.BOTTOM);
-    }
-  }
-
-  Future<void> downloadFile(String imageUrl, String fileName) async {
-    try {
-      final dio = Dio();
-      final directory = await getTemporaryDirectory();
-      final filePath = '${directory.path}/$fileName';
-      await dio.download(imageUrl, filePath);
-
-      print('File downloaded to: $filePath');
-    } catch (e) {
-      print('Error downloading file: $e');
+      Get.snackbar("Error", "Failed to clear chat: $e",
+          snackPosition: SnackPosition.BOTTOM);
     }
   }
 
   Future<void> fetchTargetUserData(String targetUserId) async {
     try {
-      DocumentSnapshot doc = await _firestore.collection('Users').doc(targetUserId).get();
-      targetUserImage.value = doc["profilePictureUrl"];
-      targetUserName.value = doc["name"];
+      DocumentSnapshot doc =
+          await _firestore.collection('Users').doc(targetUserId).get();
+      targetUserImage.value = doc["profilePictureUrl"] ?? "";
+      targetUserName.value = doc["name"] ?? "";
+      if (UserRole.patient == "patient") {
+        if (chatroom.chatroomid!.isNotEmpty) {
+          await _firestore
+              .collection('chatRooms')
+              .doc(chatroom.chatroomid)
+              .set({
+            "currentUserId": currentUser,
+            "targetUserId": targetUserId,
+          }, SetOptions(merge: true));
+        }
+      }
     } catch (e) {
-      Get.snackbar("Error", "Failed to fetch user data: $e", snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar("Error", "Failed to fetch user data: $e",
+          snackPosition: SnackPosition.BOTTOM);
     }
   }
 
@@ -147,7 +176,8 @@ class ChatController extends GetxController {
         .listen((snapshot) {
       messages.value = snapshot.docs;
     }).onError((error) {
-      Get.snackbar("Error", "Failed to load messages: $error", snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar("Error", "Failed to load messages: $error",
+          snackPosition: SnackPosition.BOTTOM);
     });
   }
 
@@ -159,6 +189,7 @@ class ChatController extends GetxController {
         sender: currentUser?.uid ?? "",
         createdon: DateTime.now(),
         text: msg,
+        imageUrl: "",
         seen: false,
       );
 
@@ -178,7 +209,8 @@ class ChatController extends GetxController {
 
         print("Message Sent!");
       } catch (e) {
-        Get.snackbar("Error", "Failed to send message: $e", snackPosition: SnackPosition.BOTTOM);
+        Get.snackbar("Error", "Failed to send message: $e",
+            snackPosition: SnackPosition.BOTTOM);
       }
     }
   }
@@ -198,7 +230,8 @@ class ChatController extends GetxController {
         }
       }
     }).onError((error) {
-      Get.snackbar("Error", "Failed to monitor typing: $error", snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar("Error", "Failed to monitor typing: $error",
+          snackPosition: SnackPosition.BOTTOM);
     });
   }
 
@@ -208,8 +241,9 @@ class ChatController extends GetxController {
         .doc(chatroom.chatroomid)
         .collection("typing")
         .doc(currentUser?.uid)
-        .set({'isTyping': typing}).catchError((error) {
-      Get.snackbar("Error", "Failed to update typing status: $error", snackPosition: SnackPosition.BOTTOM);
+        .set({'isTyping': typing}, SetOptions(merge: true)).catchError((error) {
+      Get.snackbar("Error", "Failed to update typing status: $error",
+          snackPosition: SnackPosition.BOTTOM);
     });
   }
 }
@@ -225,7 +259,10 @@ Future<String?> getOrCreateChatRoom(String receiverId) async {
     String senderId = currentUser.uid;
     String chatRoomId = _getChatRoomId(senderId, receiverId);
 
-    DocumentSnapshot roomSnapshot = await FirebaseFirestore.instance.collection('chatRooms').doc(chatRoomId).get();
+    DocumentSnapshot roomSnapshot = await FirebaseFirestore.instance
+        .collection('chatRooms')
+        .doc(chatRoomId)
+        .get();
 
     if (roomSnapshot.exists) {
       List<dynamic> users = roomSnapshot['users'];
@@ -233,7 +270,10 @@ Future<String?> getOrCreateChatRoom(String receiverId) async {
         return chatRoomId;
       } else {
         print('Users mismatch. Re-creating chat room.');
-        await FirebaseFirestore.instance.collection('chatRooms').doc(chatRoomId).set({
+        await FirebaseFirestore.instance
+            .collection('chatRooms')
+            .doc(chatRoomId)
+            .set({
           'chatRoomId': chatRoomId,
           'users': [senderId, receiverId],
           'createdAt': FieldValue.serverTimestamp(),
@@ -241,7 +281,10 @@ Future<String?> getOrCreateChatRoom(String receiverId) async {
         return chatRoomId;
       }
     } else {
-      await FirebaseFirestore.instance.collection('chatRooms').doc(chatRoomId).set({
+      await FirebaseFirestore.instance
+          .collection('chatRooms')
+          .doc(chatRoomId)
+          .set({
         'chatRoomId': chatRoomId,
         'users': [senderId, receiverId],
         'createdAt': FieldValue.serverTimestamp(),
@@ -263,7 +306,7 @@ Future<ChatRoomModel?> getChatRoomModel(String doctorId) async {
 
   try {
     final chatroomSnapshot = await FirebaseFirestore.instance
-        .collection('chatRoom')
+        .collection('chatRooms')
         .where('participants.$currentUserId', isEqualTo: true)
         .where('participants.$doctorId', isEqualTo: true)
         .limit(1)
@@ -279,7 +322,10 @@ Future<ChatRoomModel?> getChatRoomModel(String doctorId) async {
       lastMessage: '',
     );
 
-    await FirebaseFirestore.instance.collection('chatRoom').doc(newChatRoom.chatroomid).set(newChatRoom.toMap());
+    await FirebaseFirestore.instance
+        .collection('chatRooms')
+        .doc(newChatRoom.chatroomid)
+        .set(newChatRoom.toMap());
 
     return newChatRoom;
   } catch (e) {
@@ -289,5 +335,7 @@ Future<ChatRoomModel?> getChatRoomModel(String doctorId) async {
 }
 
 String _getChatRoomId(String senderId, String receiverId) {
-  return senderId.compareTo(receiverId) > 0 ? '$receiverId\_$senderId' : '$senderId\_$receiverId';
+  return senderId.compareTo(receiverId) > 0
+      ? '$receiverId\_$senderId'
+      : '$senderId\_$receiverId';
 }

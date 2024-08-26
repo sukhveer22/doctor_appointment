@@ -184,7 +184,8 @@ class _AllProfileState extends State<AllProfile> {
                   color: Colors.white,
                   image: DecorationImage(
                     image: NetworkImage(
-                      doctor?.profilePictureUrl ?? 'assets/default_profile.png',
+                      doctor?.profilePictureUrl ??
+                          'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTXy2ouPgmpbhCCFXtYVM5xKuX3e1-gGYWRFg&s',
                     ),
                     fit: BoxFit.cover,
                   ),
@@ -330,7 +331,7 @@ class _AllProfileState extends State<AllProfile> {
           ),
           TextButton(
             onPressed: () async {
-             Get.to(SelectRoleScreen());
+              Get.to(SelectRoleScreen());
             },
             child: Text('Logout'),
           ),

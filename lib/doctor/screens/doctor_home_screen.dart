@@ -11,14 +11,35 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
-class DoctorHomeScreen extends StatelessWidget {
+import '../../role_method/select_role_controller.dart';
+
+class DoctorHomeScreen extends StatefulWidget {
   const DoctorHomeScreen({super.key});
 
+  @override
+  State<DoctorHomeScreen> createState() => _DoctorHomeScreenState();
+}
+
+class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final DoctorHomeController appointmentController =
         Get.put(DoctorHomeController());
     final String? userId = FirebaseAuth.instance.currentUser?.uid;
+    final SelectRoleController userrole = Get.put(SelectRoleController());
+    @override
+    void initState() {
+      super.initState();
+      // Set the user as active when the screen is initialized
+      userrole.setActiveStatus(true);
+    }
+
+    @override
+    void dispose() {
+      // Set the user as inactive when the screen is disposed
+      userrole.setActiveStatus(false);
+      super.dispose();
+    }
 
     return Scaffold(
       body: Container(
@@ -78,8 +99,8 @@ class DoctorHomeScreen extends StatelessWidget {
                                     .doctorImageUrl.value.isNotEmpty
                                 ? NetworkImage(
                                     appointmentController.doctorImageUrl.value)
-                                : AssetImage('assets/default_profile.png')
-                                    as ImageProvider,
+                                : NetworkImage(
+                                    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTXy2ouPgmpbhCCFXtYVM5xKuX3e1-gGYWRFg&s'),
                             fit: BoxFit.cover,
                           ),
                         ),
